@@ -15,8 +15,9 @@ module Paperclip
         :ac            => 2,
         :ar            => 44100,
         :b             => '1200k',
+        :deinterlace   => nil,
         :r             => 25,
-        :deinterlace   => nil
+        :y             => nil,
       }
       @convert_options.reverse_merge! options[:convert_options] unless options[:convert_options].nil? || options[:convert_options].class != Hash
       
@@ -58,19 +59,17 @@ module Paperclip
             else
               # TODO: Padding
             end
-            parameters << "-s #{width.to_i}x#{height.to_i}" unless width.nil? || height.nil?
+            @convert_options[:s] = "#{width.to_i}x#{height.to_i}" unless width.nil? || height.nil?
           else
-            parameters << "-s #{@geometry}"
+            @convert_options[:s] = @geometry
           end
         end
         # Add format
         case @format
         when 'jpg', 'jpeg', 'png', 'gif' # Images
-          parameters << '-f image2'
-          parameters << "-ss #{@time}"
-          parameters << '-vframes 1'
-        else
-          # parameters << "-f #{@format}" # Videos
+          @convert_options[:f] = 'image2'
+          @convert_options[:ss] = @time
+          @convert_options[:vframes] = 1
         end
         
         parameters << '-i :source'
