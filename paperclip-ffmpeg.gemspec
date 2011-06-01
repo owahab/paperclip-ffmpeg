@@ -8,7 +8,7 @@ Gem::Specification.new do |s|
   s.platform    = Gem::Platform::RUBY
   s.authors     = ["Omar Abdel-Wahab"]
   s.email       = ["owahab@gmail.com"]
-  s.homepage    = ""
+  s.homepage    = "http://github.com/owahab/paperclip-ffmpeg"
   s.summary     = %q{Process your attachments with FFMPEG}
   s.description = %q{Process your attachments with FFMPEG}
 
