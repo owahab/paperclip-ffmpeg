@@ -11,7 +11,7 @@ module Paperclip
     # set, the options will be appended to the convert command upon video transcoding
     def initialize file, options = {}, attachment = nil
       @convert_options = {
-        :ab            => '46k',
+        :ab            => '64k',
         :ac            => 2,
         :ar            => 44100,
         :b             => '1200k',
