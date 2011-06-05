@@ -47,17 +47,19 @@ module Paperclip
             target_width = $1
             target_height = $2
           end
-          current_geometry = @meta[:size].split('x')
-          current_width = current_geometry[0]
-          current_height = current_geometry[1]
-          if @keep_aspect
-            # Correct size to keep aspect
-            if current_width.to_i > target_width.to_i
-              # Scaling down
-              width = target_width.to_i
-              height = (width.to_f / (@meta[:aspect].to_f)).to_i
-            else
-              # TODO: Padding
+          unless @meta[:size].nil?
+            current_geometry = @meta[:size].split('x')
+            current_width = current_geometry[0]
+            current_height = current_geometry[1]
+            if @keep_aspect
+              # Correct size to keep aspect
+              if current_width.to_i > target_width.to_i
+                # Scaling down
+                width = target_width.to_i
+                height = (width.to_f / (@meta[:aspect].to_f)).to_i
+              else
+                # TODO: Padding
+              end
             end
             @convert_options[:s] = "#{width.to_i}x#{height.to_i}" unless width.nil? || height.nil?
           else
@@ -96,7 +98,7 @@ module Paperclip
           meta[:fps] = $1.to_i
         end
         # Matching lines like:
-        # Video: mjpeg, yuvj420p, 640x480 [PAR 72:72 DAR 4:3], 10301 kb/s, 30 fps, 30 tbr, 600 tbn, 600 tbc
+        # Video: h264, yuvj420p, 640x480 [PAR 72:72 DAR 4:3], 10301 kb/s, 30 fps, 30 tbr, 600 tbn, 600 tbc
         if line =~ /Video:(\s.?(\w*),\s.?(\w*),\s(\d*x\d*)\s.?PAR\s.?(\d*):(\d*)\s.?DAR\s(\d*):(\d*))/
           meta[:size] = $4
           meta[:aspect] = $7.to_f / $8.to_f
