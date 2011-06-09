@@ -30,6 +30,7 @@ module Paperclip
       @current_format  = File.extname(@file.path)
       @basename        = File.basename(@file.path, @current_format)
       @meta            = identify
+      attachment.instance_write(:meta, @meta)
     end
     # Performs the transcoding of the +file+ into a thumbnail/video. Returns the Tempfile
     # that contains the new image/video.
@@ -110,6 +111,12 @@ module Paperclip
         end
       end
       meta
+    end
+  end
+  
+  class Attachment
+    def meta
+      instance_read(:meta)
     end
   end
 end

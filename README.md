@@ -40,8 +40,10 @@ In your model:
 
 This will produce:
 
-1. A transcoded +:medium+ FLV file with the requested dimensions if they will match the aspect ratio of the original file, otherwise, width will be maintained and height will be recalculated to keep the original aspect ration.
-2. A screenshot +:thumb+ with the requested dimensions regardless of the aspect ratio.
+1. A transcoded `:medium` FLV file with the requested dimensions if they will match the aspect ratio of the original file, otherwise, width will be maintained and height will be recalculated to keep the original aspect ration.
+2. A screenshot `:thumb` with the requested dimensions regardless of the aspect ratio.
+
+You may optionally add `<attachment>_meta` to your model and paperclip-ffmpeg will add information about the processed video.
 
 
 License
