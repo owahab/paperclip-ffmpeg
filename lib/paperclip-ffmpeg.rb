@@ -23,7 +23,9 @@ module Paperclip
       
       @geometry        = options[:geometry]
       @file            = file
-      @keep_aspect     = @geometry.nil? || @geometry[-1,1] != '#'
+      @keep_aspect     = !@geometry.nil? && @geometry[-1,1] != '!'
+      @enlarge_only    = @keep_aspect    && @geometry[-1,1] == '<'
+      @shrink_only     = @keep_aspect    && @geometry[-1,1] == '>'
       @whiny           = options[:whiny].nil? ? true : options[:whiny]
       @format          = options[:format]
       @time            = options[:time].nil? ? 3 : options[:time]
@@ -41,30 +43,41 @@ module Paperclip
       
       begin
         parameters = []
-        parameters << '-y'
         # Add geometry
         if @geometry
+          # Extract target dimensions
           if @geometry =~ /(\d*)x(\d*)/
             target_width = $1
             target_height = $2
           end
+          # Only calculate target dimensions if we have current dimensions
           unless @meta[:size].nil?
             current_geometry = @meta[:size].split('x')
+            # Current width and height
             current_width = current_geometry[0]
             current_height = current_geometry[1]
             if @keep_aspect
-              # Correct size to keep aspect
-              if current_width.to_i > target_width.to_i
-                # Scaling down
+              if current_width.to_i >= target_width.to_i && !@enlarge_only
+                # Keep aspect ratio
                 width = target_width.to_i
                 height = (width.to_f / (@meta[:aspect].to_f)).to_i
-              else
-                # TODO: Padding
+              elsif current_width.to_i < target_width.to_i && !@shrink_only
+                # Keep aspect ratio
+                width = target_width.to_i
+                height = (width.to_f / (@meta[:aspect].to_f)).to_i
+                # We should add the delta as a padding area
+                pad_h = (target_height.to_i - current_height.to_i) / 2
+                pad_w = (target_width.to_i - current_width.to_i) / 2
+                @convert_options[:vf] = "pad=#{width.to_i}:#{height.to_i}:#{pad_h}:#{pad_w}:black"
               end
+            else
+              # Do not keep aspect ratio
+              width = target_width
+              height = target_height
             end
-            @convert_options[:s] = "#{width.to_i}x#{height.to_i}" unless width.nil? || height.nil?
-          else
-            @convert_options[:s] = @geometry
+          end
+          unless width.nil? || height.nil? || @convert_options[:vf]
+            @convert_options[:s] = "#{width.to_i}x#{height.to_i}"
           end
         end
         # Add format
