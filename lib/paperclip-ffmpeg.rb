@@ -100,9 +100,11 @@ module Paperclip
         end
         # Matching lines like:
         # Video: h264, yuvj420p, 640x480 [PAR 72:72 DAR 4:3], 10301 kb/s, 30 fps, 30 tbr, 600 tbn, 600 tbc
-        if line =~ /Video:(\s.?(\w*),\s.?(\w*),\s(\d*x\d*)\s.?PAR\s.?(\d*):(\d*)\s.?DAR\s(\d*):(\d*))/
-          meta[:size] = $4
-          meta[:aspect] = $7.to_f / $8.to_f
+        if line =~ /Video:(.*)/
+          v = $1.to_s.split(',')
+          size = v[2].strip!.split(' ').first
+          meta[:size] = size.to_s
+          meta[:aspect] = size.split('x').first.to_f / size.split('x').last.to_f
         end
         # Matching Duration: 00:01:31.66, start: 0.000000, bitrate: 10404 kb/s
         if line =~ /Duration:(\s.?(\d*):(\d*):(\d*\.\d*))/
