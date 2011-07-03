@@ -24,6 +24,7 @@ module Paperclip
       @geometry        = options[:geometry]
       @file            = file
       @keep_aspect     = !@geometry.nil? && @geometry[-1,1] != '!'
+      @pad_only        = @keep_aspect    && @geometry[-1,1] == '#'
       @enlarge_only    = @keep_aspect    && @geometry[-1,1] == '<'
       @shrink_only     = @keep_aspect    && @geometry[-1,1] == '>'
       @whiny           = options[:whiny].nil? ? true : options[:whiny]
@@ -41,58 +42,72 @@ module Paperclip
       dst = Tempfile.new([@basename, @format ? ".#{@format}" : ''])
       dst.binmode
       
-      begin
-        parameters = []
-        # Add geometry
-        if @geometry
-          # Extract target dimensions
-          if @geometry =~ /(\d*)x(\d*)/
-            target_width = $1
-            target_height = $2
-          end
-          # Only calculate target dimensions if we have current dimensions
-          unless @meta[:size].nil?
-            current_geometry = @meta[:size].split('x')
-            # Current width and height
-            current_width = current_geometry[0]
-            current_height = current_geometry[1]
-            if @keep_aspect
-              if current_width.to_i >= target_width.to_i && !@enlarge_only
+      parameters = []
+      # Add geometry
+      if @geometry
+        # Extract target dimensions
+        if @geometry =~ /(\d*)x(\d*)/
+          target_width = $1
+          target_height = $2
+        end
+        # Only calculate target dimensions if we have current dimensions
+        unless @meta[:size].nil?
+          current_geometry = @meta[:size].split('x')
+          # Current width and height
+          current_width = current_geometry[0]
+          current_height = current_geometry[1]
+          if @keep_aspect
+            if @enlarge_only
+              if current_width.to_i < target_width.to_i
                 # Keep aspect ratio
                 width = target_width.to_i
                 height = (width.to_f / (@meta[:aspect].to_f)).to_i
-              elsif current_width.to_i < target_width.to_i && !@shrink_only
-                # Keep aspect ratio
-                width = target_width.to_i
-                height = (width.to_f / (@meta[:aspect].to_f)).to_i
-                # We should add the delta as a padding area
-                pad_h = (target_height.to_i - current_height.to_i) / 2
-                pad_w = (target_width.to_i - current_width.to_i) / 2
-                @convert_options[:vf] = "pad=#{width.to_i}:#{height.to_i}:#{pad_h}:#{pad_w}:black"
+                @convert_options[:s] = "#{width.to_i}x#{height.to_i}"
+              else
+                return nil
               end
+            elsif @shrink_only
+              if current_width.to_i > target_width.to_i
+                # Keep aspect ratio
+                width = target_width.to_i
+                height = (width.to_f / (@meta[:aspect].to_f)).to_i
+                @convert_options[:s] = "#{width.to_i}x#{height.to_i}"
+              else
+                return nil
+              end
+            elsif @pad_only
+              # Keep aspect ratio
+              width = target_width.to_i
+              height = (width.to_f / (@meta[:aspect].to_f)).to_i
+              # We should add half the delta as a padding offset Y
+              pad_y = (target_height.to_f - height.to_f).abs.to_i / 2
+              @convert_options[:vf] = "scale=#{width}:-1,pad=#{width.to_i}:#{target_height.to_i}:0:#{pad_y}:black"
             else
-              # Do not keep aspect ratio
-              width = target_width
-              height = target_height
+              # Keep aspect ratio
+              width = target_width.to_i
+              height = (width.to_f / (@meta[:aspect].to_f)).to_i
+              @convert_options[:s] = "#{width.to_i}x#{height.to_i}"
             end
-          end
-          unless width.nil? || height.nil? || @convert_options[:vf]
-            @convert_options[:s] = "#{width.to_i}x#{height.to_i}"
+          else
+            # Do not keep aspect ratio
+            @convert_options[:s] = "#{target_width.to_i}x#{target_height.to_i}"
           end
         end
-        # Add format
-        case @format
-        when 'jpg', 'jpeg', 'png', 'gif' # Images
-          @convert_options[:f] = 'image2'
-          @convert_options[:ss] = @time
-          @convert_options[:vframes] = 1
-        end
-        
-        parameters << '-i :source'
-        parameters << @convert_options.map { |k,v| "-#{k.to_s} #{v} "}
-        parameters << ":dest"
+      end
+      # Add format
+      case @format
+      when 'jpg', 'jpeg', 'png', 'gif' # Images
+        @convert_options[:f] = 'image2'
+        @convert_options[:ss] = @time
+        @convert_options[:vframes] = 1
+      end
+      
+      parameters << '-i :source'
+      parameters << @convert_options.map { |k,v| "-#{k.to_s} #{v} "}
+      parameters << ":dest"
 
-        parameters = parameters.flatten.compact.join(" ").strip.squeeze(" ")
+      parameters = parameters.flatten.compact.join(" ").strip.squeeze(" ")
+      begin
         success = Paperclip.run("ffmpeg", parameters, :source => "#{File.expand_path(src.path)}", :dest => File.expand_path(dst.path))
         
       rescue PaperclipCommandLineError => e

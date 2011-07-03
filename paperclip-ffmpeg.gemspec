@@ -1,10 +1,9 @@
 # -*- encoding: utf-8 -*-
 $:.push File.expand_path("../lib", __FILE__)
-require "paperclip-ffmpeg/version"
 
 Gem::Specification.new do |s|
   s.name        = "paperclip-ffmpeg"
-  s.version     = Paperclip::Ffmpeg::VERSION
+  s.version     = '0.6.2'
   s.platform    = Gem::Platform::RUBY
   s.authors     = ["Omar Abdel-Wahab"]
   s.email       = ["owahab@gmail.com"]
