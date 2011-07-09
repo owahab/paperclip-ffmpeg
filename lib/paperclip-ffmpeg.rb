@@ -137,7 +137,6 @@ module Paperclip
         # Matching Duration: 00:01:31.66, start: 0.000000, bitrate: 10404 kb/s
         if line =~ /Duration:(\s.?(\d*):(\d*):(\d*\.\d*))/
           meta[:length] = $2.to_s + ":" + $3.to_s + ":" + $4.to_s
-          meta[:frames] = ($4.to_i + ($3.to_i * 60) + ($2.to_i * 60 * 60)) * meta[:fps]
         end
       end
       meta
