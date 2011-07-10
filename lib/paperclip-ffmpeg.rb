@@ -98,6 +98,8 @@ module Paperclip
           end
         end
       end
+      # Add source
+      @convert_options[:i] = ':source'
       # Add format
       case @format
       when 'jpg', 'jpeg', 'png', 'gif' # Images
@@ -107,7 +109,6 @@ module Paperclip
       end
       
       parameters << @convert_options.map { |k,v| "-#{k.to_s} #{v} "}
-      parameters << '-i :source'
       parameters << ":dest"
 
       parameters = parameters.flatten.compact.join(" ").strip.squeeze(" ")
