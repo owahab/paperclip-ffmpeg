@@ -80,8 +80,12 @@ module Paperclip
               width = target_width.to_i
               height = (width.to_f / (@meta[:aspect].to_f)).to_i
               # We should add half the delta as a padding offset Y
-              pad_y = (target_height.to_f - height.to_f).abs.to_i / 2
-              @convert_options[:vf] = "scale=#{width}:-1,pad=#{width.to_i}:#{target_height.to_i}:0:#{pad_y}:black"
+              pad_y = (target_height.to_f - height.to_f) / 2
+              if pad_y > 0
+                @convert_options[:vf] = "scale=#{width}:-1,pad=#{width.to_i}:#{target_height.to_i}:0:#{pad_y}:black"
+              else
+                @convert_options[:vf] = "scale=#{width}:-1,crop=#{width.to_i}:#{height.to_i}"
+              end
             else
               # Keep aspect ratio
               width = target_width.to_i
