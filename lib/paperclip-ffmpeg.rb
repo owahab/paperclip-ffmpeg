@@ -114,7 +114,7 @@ module Paperclip
       begin
         success = Paperclip.run("ffmpeg", parameters, :source => "#{File.expand_path(src.path)}", :dest => File.expand_path(dst.path))
         
-      rescue PaperclipCommandLineError => e
+      rescue Cocaine::ExitStatusError => e
         raise PaperclipError, "error while processing video for #{@basename}." if @whiny
       end
 
