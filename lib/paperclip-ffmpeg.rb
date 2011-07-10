@@ -98,8 +98,6 @@ module Paperclip
           end
         end
       end
-      # Add source
-      @convert_options[:i] = ':source'
       # Add format
       case @format
       when 'jpg', 'jpeg', 'png', 'gif' # Images
@@ -108,10 +106,15 @@ module Paperclip
         @convert_options[:vframes] = 1
       end
       
+      # Add source
+      @convert_options[:i] = ':source'
+      
       parameters << @convert_options.map { |k,v| "-#{k.to_s} #{v} "}
       parameters << ":dest"
 
       parameters = parameters.flatten.compact.join(" ").strip.squeeze(" ")
+      
+      puts "ffmpeg #{parameters}"
       begin
         success = Paperclip.run("ffmpeg", parameters, :source => "#{File.expand_path(src.path)}", :dest => File.expand_path(dst.path))
         
