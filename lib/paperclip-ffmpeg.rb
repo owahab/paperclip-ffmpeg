@@ -106,8 +106,8 @@ module Paperclip
         @convert_options[:vframes] = 1
       end
       
-      parameters << '-i :source'
       parameters << @convert_options.map { |k,v| "-#{k.to_s} #{v} "}
+      parameters << '-i :source'
       parameters << ":dest"
 
       parameters = parameters.flatten.compact.join(" ").strip.squeeze(" ")
