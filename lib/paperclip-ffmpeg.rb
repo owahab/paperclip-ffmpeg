@@ -11,15 +11,17 @@ module Paperclip
     # set, the options will be appended to the convert command upon video transcoding
     def initialize file, options = {}, attachment = nil
       @convert_options = {
-        :ab            => '64k',
-        :ac            => 2,
-        :ar            => 44100,
-        :b             => '1200k',
-        :deinterlace   => nil,
-        :r             => 25,
-        :y             => nil,
+        :input => {},
+        :output => { :y => nil }
       }
-      @convert_options.reverse_merge! options[:convert_options] unless options[:convert_options].nil? || options[:convert_options].class != Hash
+      unless options[:convert_options].nil? || options[:convert_options].class != Hash
+        unless options[:convert_options][:input].nil? || options[:convert_options][:input].class != Hash
+          @convert_options[:input].reverse_merge! options[:convert_options][:input]
+        end
+        unless options[:convert_options][:output].nil? || options[:convert_options][:output].class != Hash
+          @convert_options[:output].reverse_merge! options[:convert_options][:output]
+        end
+      end
       
       @geometry        = options[:geometry]
       @file            = file
@@ -62,7 +64,7 @@ module Paperclip
                 # Keep aspect ratio
                 width = target_width.to_i
                 height = (width.to_f / (@meta[:aspect].to_f)).to_i
-                @convert_options[:s] = "#{width.to_i}x#{height.to_i}"
+                @convert_options[:output][:s] = "#{width.to_i}x#{height.to_i}"
               else
                 return nil
               end
@@ -71,7 +73,7 @@ module Paperclip
                 # Keep aspect ratio
                 width = target_width.to_i
                 height = (width.to_f / (@meta[:aspect].to_f)).to_i
-                @convert_options[:s] = "#{width.to_i}x#{height.to_i}"
+                @convert_options[:output][:s] = "#{width.to_i}x#{height.to_i}"
               else
                 return nil
               end
@@ -82,44 +84,43 @@ module Paperclip
               # We should add half the delta as a padding offset Y
               pad_y = (target_height.to_f - height.to_f) / 2
               if pad_y > 0
-                @convert_options[:vf] = "scale=#{width}:-1,pad=#{width.to_i}:#{target_height.to_i}:0:#{pad_y}:black"
+                @convert_options[:output][:vf] = "scale=#{width}:-1,pad=#{width.to_i}:#{target_height.to_i}:0:#{pad_y}:black"
               else
-                @convert_options[:vf] = "scale=#{width}:-1,crop=#{width.to_i}:#{height.to_i}"
+                @convert_options[:output][:vf] = "scale=#{width}:-1,crop=#{width.to_i}:#{height.to_i}"
               end
             else
               # Keep aspect ratio
               width = target_width.to_i
               height = (width.to_f / (@meta[:aspect].to_f)).to_i
-              @convert_options[:s] = "#{width.to_i}x#{height.to_i}"
+              @convert_options[:output][:s] = "#{width.to_i}x#{height.to_i}"
             end
           else
             # Do not keep aspect ratio
-            @convert_options[:s] = "#{target_width.to_i}x#{target_height.to_i}"
+            @convert_options[:output][:s] = "#{target_width.to_i}x#{target_height.to_i}"
           end
         end
       end
       # Add format
       case @format
       when 'jpg', 'jpeg', 'png', 'gif' # Images
-        @convert_options[:f] = 'image2'
-        @convert_options[:ss] = @time
-        @convert_options[:vframes] = 1
+        @convert_options[:input][:ss] = @time
+        @convert_options[:input][:vframes] = 1
+        @convert_options[:output][:f] = 'image2'
       end
       
       # Add source
-      @convert_options[:i] = ':source'
-      
-      parameters << @convert_options.map { |k,v| "-#{k.to_s} #{v} "}
+      parameters << @convert_options[:input].map { |k,v| "-#{k.to_s} #{v} "}
+      parameters << "-i :source"
+      parameters << @convert_options[:output].map { |k,v| "-#{k.to_s} #{v} "}
       parameters << ":dest"
 
       parameters = parameters.flatten.compact.join(" ").strip.squeeze(" ")
       
-      puts "ffmpeg #{parameters}"
+      Paperclip.log("[paperclip][ffmpeg] #{parameters}")
       begin
         success = Paperclip.run("ffmpeg", parameters, :source => "#{File.expand_path(src.path)}", :dest => File.expand_path(dst.path))
-        
       rescue Cocaine::ExitStatusError => e
-        raise PaperclipError, "error while processing video for #{@basename}." if @whiny
+        raise PaperclipError, "error while processing video for #{@basename}: #{e}" if @whiny
       end
 
       dst
