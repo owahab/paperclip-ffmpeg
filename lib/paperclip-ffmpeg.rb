@@ -101,7 +101,7 @@ module Paperclip
       # Add format
       case @format
       when 'jpg', 'jpeg', 'png', 'gif' # Images
-        @convert_options[:f] = 'image2'
+        # @convert_options[:f] = 'image2'
         @convert_options[:ss] = @time
         @convert_options[:vframes] = 1
       end
