@@ -114,12 +114,13 @@ module Paperclip
 
       parameters = parameters.flatten.compact.join(" ").strip.squeeze(" ")
       
-      puts "ffmpeg #{parameters}"
+      Paperclip.log("ffmpeg #{parameters}")
       begin
         success = Paperclip.run("ffmpeg", parameters, :source => "#{File.expand_path(src.path)}", :dest => File.expand_path(dst.path))
         
       rescue Cocaine::ExitStatusError => e
-        raise PaperclipError, "error while processing video for #{@basename}." if @whiny
+        Paperclip.log("ffmpeg #{parameters}: #{e}")
+        raise PaperclipError, "error while processing video for #{@basename}. #{e}" if @whiny
       end
 
       dst
