@@ -119,7 +119,7 @@ module Paperclip
       parameters = parameters.flatten.compact.join(" ").strip.squeeze(" ")
       
       # Append with qtfaststart processor
-      if @make_streamable
+      if @make_streamable && ['mp4', 'mov'].include?(@format)
         paramaters += " && qtfaststart :dest"
       end
       
