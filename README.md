@@ -48,7 +48,7 @@ You may optionally add `<attachment>_meta` to your model and paperclip-ffmpeg wi
 Streaming Video
 -------------------
 
-When ffmpeg produces mp4 files, it places the moov atom at the end which makes it unsuitable for streaming to mobile devices (i.e. Android and iPhone). In order to move the moov atom to the beginning of the produced file, the produced file must be processed with qtfaststart.
+When ffmpeg produces mp4 files, it places the moov atom at the end which makes it unsuitable for streaming to mobile devices (i.e. Android and iPhone). In order to move the moov atom to the beginning of the produced file, paperclip-ffmpeg supports automatically processing the produced file with qtfaststart.
 
 In your model:
 
@@ -57,8 +57,6 @@ In your model:
           :mobile => {:geometry => "400x300", :format => 'mp4', :streamable => true}
       }, :processors => [:ffmpeg]
     end
-    
-This will automatically process the produced mp4 file with qtfaststart, making it suitable for streaming. The `:streamable` option should only be used on mp4 and mov files.
 
 See [danielgtaylor/qtfaststart](https://github.com/danielgtaylor/qtfaststart) for instructions on how to setup qtfaststart.
 
