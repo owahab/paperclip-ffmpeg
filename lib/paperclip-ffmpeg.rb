@@ -120,7 +120,7 @@ module Paperclip
       
       # Append with qtfaststart processor
       if @make_streamable && ['mp4', 'mov'].include?(@format)
-        paramaters += " && qtfaststart :dest"
+        parameters += " && qtfaststart :dest"
       end
       
       Paperclip.log("[paperclip][ffmpeg] #{parameters}")
