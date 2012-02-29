@@ -45,6 +45,20 @@ This will produce:
 
 You may optionally add `<attachment>_meta` to your model and paperclip-ffmpeg will add information about the processed video.
 
+Streamable Encoding
+-------------------
+
+When ffmpeg produces mp4 files, it places the moov atom at the end which makes it unsuitable for streaming to mobile devices (i.e. Android and iPhone). In order to move the moov atom to the beginning of the produced file, it must be processed with qtfaststart. See [danielgtaylor/qtfaststart](https://github.com/danielgtaylor/qtfaststart) for setup instructions.
+
+In your model:
+
+    class Lesson < ActiveRecord::Base
+      has_attached_file :video, :styles => {
+          :mobile => {:geometry => "400x300", :format => 'mp4', :streamable => true}
+      }, :processors => [:ffmpeg]
+    end
+    
+This will automatically process the produced mp4 file with qtfaststart, making it suitable for streaming. `:streamable` should only be used on .mp4 and .mov files.
 
 License
 -------

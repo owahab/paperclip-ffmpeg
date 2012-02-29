@@ -8,7 +8,8 @@ module Paperclip
     # which is a "WxH"-style string. +format+ should be specified.
     # Video transcoding will raise no errors unless
     # +whiny+ is true (which it is, by default. If +convert_options+ is
-    # set, the options will be appended to the convert command upon video transcoding
+    # set, the options will be appended to the convert command upon video transcoding.
+    # If +streamable+ is set, then qtfaststart will be run on the output file
     def initialize file, options = {}, attachment = nil
       @convert_options = {
         :input => {},
@@ -31,6 +32,7 @@ module Paperclip
       @shrink_only     = @keep_aspect    && @geometry[-1,1] == '>'
       @whiny           = options[:whiny].nil? ? true : options[:whiny]
       @format          = options[:format]
+      @make_streamable = options[:streamable]
       @time            = options[:time].nil? ? 3 : options[:time]
       @current_format  = File.extname(@file.path)
       @basename        = File.basename(@file.path, @current_format)
@@ -115,6 +117,11 @@ module Paperclip
       parameters << ":dest"
 
       parameters = parameters.flatten.compact.join(" ").strip.squeeze(" ")
+      
+      # Append with qtfaststart processor
+      if @make_streamable
+        paramaters += " && qtfaststart :dest"
+      end
       
       Paperclip.log("[paperclip][ffmpeg] #{parameters}")
       begin
