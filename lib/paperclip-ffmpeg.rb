@@ -94,11 +94,11 @@ module Paperclip
               # Keep aspect ratio
               width = target_width.to_i
               height = (width.to_f / (@meta[:aspect].to_f)).to_i
-              @convert_options[:output][:s] = "#{width.to_i}x#{height.to_i}"
+              @convert_options[:output][:s] = "#{width.to_i/2*2}x#{height.to_i/2*2}"
             end
           else
             # Do not keep aspect ratio
-            @convert_options[:output][:s] = "#{target_width.to_i}x#{target_height.to_i}"
+            @convert_options[:output][:s] = "#{target_width.to_i/2*2}x#{target_height.to_i/2*2}"
           end
         end
       end
