@@ -19,7 +19,7 @@ module Paperclip
     # Returns the Tempfile that contains the new video or the original
     # file if +streaming+ wasn't set. 
     def make
-      return src unless @streaming
+      return @file unless @streaming
       
       src = @file
       dst = Tempfile.new([@basename, @format ? ".#{@format}" : ''])
