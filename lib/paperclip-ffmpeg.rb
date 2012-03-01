@@ -124,6 +124,7 @@ module Paperclip
       end
       
       Paperclip.log("[paperclip][ffmpeg] #{parameters}")
+      Paperclip.log("[ffmpeg] #{parameters}")
       begin
         success = Paperclip.run("ffmpeg", parameters, :source => "#{File.expand_path(src.path)}", :dest => File.expand_path(dst.path))
       rescue Cocaine::ExitStatusError => e
