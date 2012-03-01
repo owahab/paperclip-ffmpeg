@@ -1,4 +1,3 @@
-require "paperclip"
 module Paperclip
   class Qtfaststart < Processor
     attr_accessor :streaming, :format, :whiny
