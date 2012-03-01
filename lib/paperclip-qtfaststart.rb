@@ -1,11 +1,13 @@
 require "paperclip"
 module Paperclip
   class Qtfaststart < Processor
+    attr_accessor :streaming, :format, :whiny
+    
     # Creates a Video object set to work on the +file+ given. It
     # will attempt to reposition the moov atom in the video given
-    # if +streamable+ is set.
+    # if +streaming+ is set.
     def initialize file, options = {}, attachment = nil
-      @make_streamable = options[:streamable]
+      @streaming      = options[:streaming]
       @file            = file
       @whiny           = options[:whiny].nil? ? true : options[:whiny]
       @format          = options[:format]
@@ -16,9 +18,9 @@ module Paperclip
     
     # Performs the atom repositioning on +file+.
     # Returns the Tempfile that contains the new video or the original
-    # file if +streamable+ wasn't set. 
+    # file if +streaming+ wasn't set. 
     def make
-      return src unless @make_streamable
+      return src unless @streaming
       
       src = @file
       dst = Tempfile.new([@basename, @format ? ".#{@format}" : ''])

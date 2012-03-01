@@ -54,7 +54,7 @@ In your model:
 
     class Lesson < ActiveRecord::Base
       has_attached_file :video, :styles => {
-          :mobile => {:geometry => "400x300", :format => 'mp4', :streamable => true}
+          :mobile => {:geometry => "400x300", :format => 'mp4', :streaming => true}
       }, :processors => [:ffmpeg]
     end
 
