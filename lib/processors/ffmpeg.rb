@@ -128,7 +128,7 @@ module Paperclip
     
     def identify
       meta = {}
-      command = "ffmpeg -i #{File.expand_path(@file.path)} 2>&1"
+      command = "ffmpeg -i \"#{File.expand_path(@file.path)}\" 2>&1"
       Paperclip.log(command)
       ffmpeg = IO.popen(command)
       ffmpeg.each("\r") do |line|
