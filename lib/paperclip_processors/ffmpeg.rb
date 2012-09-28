@@ -40,18 +40,19 @@ module Paperclip
     # Performs the transcoding of the +file+ into a thumbnail/video. Returns the Tempfile
     # that contains the new image/video.
     def make
-      Paperclip.log("[ffmpeg] Making...") if @whiny
+      Ffmpeg.log("Making...") if @whiny
       src = @file
-      Paperclip.log("[ffmpeg] Building Destination File: '#{@basename}' + '#{@format}'") if @whiny
+      Ffmpeg.log("Building Destination File: '#{@basename}' + '#{@format}'") if @whiny
       dst = Tempfile.new([@basename, @format ? ".#{@format}" : ''])
-      Paperclip.log("[ffmpeg] Destination File Built") if @whiny
+      Ffmpeg.log("Destination File Built") if @whiny
       dst.binmode
       
       parameters = []
 
-      Paperclip.log("[ffmpeg] Adding Geometry") if @whiny
+      Ffmpeg.log("Adding Geometry") if @whiny
       # Add geometry
       if @geometry
+        Ffmpeg.log("Extracting Target Dimensions") if @whiny
         # Extract target dimensions
         if @geometry =~ /(\d*)x(\d*)/
           target_width = $1
@@ -106,7 +107,7 @@ module Paperclip
         end
       end
 
-      Paperclip.log("[ffmpeg] Adding Format") if @whiny
+      Ffmpeg.log("Adding Format") if @whiny
       # Add format
       case @format
       when 'jpg', 'jpeg', 'png', 'gif' # Images
@@ -115,17 +116,17 @@ module Paperclip
         @convert_options[:output][:f] = 'image2'
       end
 
-      Paperclip.log("[ffmpeg] Adding Source") if @whiny
+      Ffmpeg.log("Adding Source") if @whiny
       # Add source
       parameters << @convert_options[:input].map { |k,v| "-#{k.to_s} #{v} "}
       parameters << "-i :source"
       parameters << @convert_options[:output].map { |k,v| "-#{k.to_s} #{v} "}
       parameters << ":dest"
 
-      Paperclip.log("[ffmpeg] Building Parameters") if @whiny
+      Ffmpeg.log("Building Parameters") if @whiny
       parameters = parameters.flatten.compact.join(" ").strip.squeeze(" ")
-      
-      Paperclip.log("[ffmpeg] #{parameters}")
+
+      Ffmpeg.log(parameters)
       begin
         success = Paperclip.run("ffmpeg", parameters, :source => "#{File.expand_path(src.path)}", :dest => File.expand_path(dst.path))
       rescue Cocaine::ExitStatusError => e
@@ -159,6 +160,11 @@ module Paperclip
       end
       Paperclip.log("[ffmpeg] Command Success") if @whiny
       meta
+    end
+
+
+    def self.log message
+      Paperclip.log "[ffmpeg] #{message}"
     end
   end
   
