@@ -60,10 +60,8 @@ module Paperclip
         end
         # Only calculate target dimensions if we have current dimensions
         unless @meta[:size].nil?
-          current_geometry = @meta[:size].split('x')
+          current_width, current_height = @meta[:size].split('x')
           # Current width and height
-          current_width = current_geometry[0]
-          current_height = current_geometry[1]
           if @keep_aspect
             if @enlarge_only
               if current_width.to_i < target_width.to_i
