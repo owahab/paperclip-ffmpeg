@@ -40,8 +40,11 @@ module Paperclip
     # Performs the transcoding of the +file+ into a thumbnail/video. Returns the Tempfile
     # that contains the new image/video.
     def make
+      Paperclip.log("[ffmpeg] Making...") if @whiny
       src = @file
+      Paperclip.log("[ffmpeg] Building Destination File: '#{@basename}' + ''#{@format}'") if @whiny
       dst = Tempfile.new([@basename, @format ? ".#{@format}" : ''])
+      Paperclip.log("[ffmpeg] Destination File Built") if @whiny
       dst.binmode
       
       parameters = []
