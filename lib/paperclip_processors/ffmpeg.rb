@@ -129,7 +129,7 @@ module Paperclip
     def identify
       meta = {}
       command = "ffmpeg -i \"#{File.expand_path(@file.path)}\" 2>&1"
-      Paperclip.log(command)
+      Paperclip.log("[ffmpeg] #{command}")
       ffmpeg = IO.popen(command)
       ffmpeg.each("\r") do |line|
         if line =~ /((\d*)\s.?)fps,/
@@ -148,6 +148,7 @@ module Paperclip
           meta[:length] = $2.to_s + ":" + $3.to_s + ":" + $4.to_s
         end
       end
+      Paperclip.log("[ffmpeg] Command Success") if @whiny
       meta
     end
   end
