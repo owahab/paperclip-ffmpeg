@@ -75,7 +75,7 @@ module Paperclip
                 Ffmpeg.log("Convert Options: #{@convert_options[:output][:s]}") if @whiny
               else
                 Ffmpeg.log("Source is Larger than Destination, Doing Nothing") if @whiny
-                return nil
+                #return nil
               end
             elsif @shrink_only
               Ffmpeg.log("Shrink Only") if @whiny
@@ -87,7 +87,7 @@ module Paperclip
                 Ffmpeg.log("Convert Options: #{@convert_options[:output][:s]}") if @whiny
               else
                 Ffmpeg.log("Source is Smaller than Destination, Doing Nothing") if @whiny
-                return nil
+                #return nil
               end
             elsif @pad_only
               Ffmpeg.log("Pad Only") if @whiny
