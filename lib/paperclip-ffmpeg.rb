@@ -1,3 +1,3 @@
 require "paperclip"
-require "processors/ffmpeg"
-require "processors/qtfaststart"
+require "paperclip_processors/ffmpeg"
+require "paperclip_processors/qtfaststart"
