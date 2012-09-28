@@ -42,12 +42,14 @@ module Paperclip
     def make
       Paperclip.log("[ffmpeg] Making...") if @whiny
       src = @file
-      Paperclip.log("[ffmpeg] Building Destination File: '#{@basename}' + ''#{@format}'") if @whiny
+      Paperclip.log("[ffmpeg] Building Destination File: '#{@basename}' + '#{@format}'") if @whiny
       dst = Tempfile.new([@basename, @format ? ".#{@format}" : ''])
       Paperclip.log("[ffmpeg] Destination File Built") if @whiny
       dst.binmode
       
       parameters = []
+
+      Paperclip.log("[ffmpeg] Adding Geometry") if @whiny
       # Add geometry
       if @geometry
         # Extract target dimensions
@@ -103,6 +105,8 @@ module Paperclip
           end
         end
       end
+
+      Paperclip.log("[ffmpeg] Adding Format") if @whiny
       # Add format
       case @format
       when 'jpg', 'jpeg', 'png', 'gif' # Images
@@ -110,13 +114,15 @@ module Paperclip
         @convert_options[:output][:vframes] = 1
         @convert_options[:output][:f] = 'image2'
       end
-      
+
+      Paperclip.log("[ffmpeg] Adding Source") if @whiny
       # Add source
       parameters << @convert_options[:input].map { |k,v| "-#{k.to_s} #{v} "}
       parameters << "-i :source"
       parameters << @convert_options[:output].map { |k,v| "-#{k.to_s} #{v} "}
       parameters << ":dest"
 
+      Paperclip.log("[ffmpeg] Building Parameters") if @whiny
       parameters = parameters.flatten.compact.join(" ").strip.squeeze(" ")
       
       Paperclip.log("[ffmpeg] #{parameters}")
