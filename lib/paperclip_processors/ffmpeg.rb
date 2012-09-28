@@ -60,28 +60,37 @@ module Paperclip
         end
         # Only calculate target dimensions if we have current dimensions
         unless @meta[:size].nil?
+          Ffmpeg.log("Target Size is Available") if @whiny
           current_width, current_height = @meta[:size].split('x')
           # Current width and height
           if @keep_aspect
+            Ffmpeg.log("Keeping Aspect Ratio") if @whiny
             if @enlarge_only
+              Ffmpeg.log("Enlarge Only") if @whiny
               if current_width.to_i < target_width.to_i
                 # Keep aspect ratio
                 width = target_width.to_i
                 height = (width.to_f / (@meta[:aspect].to_f)).to_i
                 @convert_options[:output][:s] = "#{width.to_i/2*2}x#{height.to_i/2*2}"
+                Ffmpeg.log("Convert Options: #{@convert_options[:output][:s]}") if @whiny
               else
+                Ffmpeg.log("Source is Larger than Destination, Doing Nothing") if @whiny
                 return nil
               end
             elsif @shrink_only
+              Ffmpeg.log("Shrink Only") if @whiny
               if current_width.to_i > target_width.to_i
                 # Keep aspect ratio
                 width = target_width.to_i
                 height = (width.to_f / (@meta[:aspect].to_f)).to_i
                 @convert_options[:output][:s] = "#{width.to_i/2*2}x#{height.to_i/2*2}"
+                Ffmpeg.log("Convert Options: #{@convert_options[:output][:s]}") if @whiny
               else
+                Ffmpeg.log("Source is Smaller than Destination, Doing Nothing") if @whiny
                 return nil
               end
             elsif @pad_only
+              Ffmpeg.log("Pad Only") if @whiny
               # Keep aspect ratio
               width = target_width.to_i
               height = (width.to_f / (@meta[:aspect].to_f)).to_i
@@ -92,15 +101,20 @@ module Paperclip
               else
                 @convert_options[:output][:vf] = "scale=#{width}:-1,crop=#{width.to_i}:#{height.to_i}"
               end
+              Ffmpeg.log("Convert Options: #{@convert_options[:output][:s]}") if @whiny
             else
+              Ffmpeg.log("Resize") if @whiny
               # Keep aspect ratio
               width = target_width.to_i
               height = (width.to_f / (@meta[:aspect].to_f)).to_i
               @convert_options[:output][:s] = "#{width.to_i/2*2}x#{height.to_i/2*2}"
+              Ffmpeg.log("Convert Options: #{@convert_options[:output][:s]}") if @whiny
             end
           else
+            Ffmpeg.log("Not Keeping Aspect Ratio") if @whiny
             # Do not keep aspect ratio
             @convert_options[:output][:s] = "#{target_width.to_i/2*2}x#{target_height.to_i/2*2}"
+            Ffmpeg.log("Convert Options: #{@convert_options[:output][:s]}") if @whiny
           end
         end
       end
