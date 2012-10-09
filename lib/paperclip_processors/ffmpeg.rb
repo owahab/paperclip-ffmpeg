@@ -40,13 +40,19 @@ module Paperclip
     # Performs the transcoding of the +file+ into a thumbnail/video. Returns the Tempfile
     # that contains the new image/video.
     def make
+      Ffmpeg.log("Making...") if @whiny
       src = @file
+      Ffmpeg.log("Building Destination File: '#{@basename}' + '#{@format}'") if @whiny
       dst = Tempfile.new([@basename, @format ? ".#{@format}" : ''])
+      Ffmpeg.log("Destination File Built") if @whiny
       dst.binmode
       
       parameters = []
+
+      Ffmpeg.log("Adding Geometry") if @whiny
       # Add geometry
       if @geometry
+        Ffmpeg.log("Extracting Target Dimensions") if @whiny
         # Extract target dimensions
         if @geometry =~ /(\d*)x(\d*)/
           target_width = $1
@@ -54,30 +60,37 @@ module Paperclip
         end
         # Only calculate target dimensions if we have current dimensions
         unless @meta[:size].nil?
-          current_geometry = @meta[:size].split('x')
+          Ffmpeg.log("Target Size is Available") if @whiny
+          current_width, current_height = @meta[:size].split('x')
           # Current width and height
-          current_width = current_geometry[0]
-          current_height = current_geometry[1]
           if @keep_aspect
+            Ffmpeg.log("Keeping Aspect Ratio") if @whiny
             if @enlarge_only
+              Ffmpeg.log("Enlarge Only") if @whiny
               if current_width.to_i < target_width.to_i
                 # Keep aspect ratio
                 width = target_width.to_i
                 height = (width.to_f / (@meta[:aspect].to_f)).to_i
                 @convert_options[:output][:s] = "#{width.to_i/2*2}x#{height.to_i/2*2}"
+                Ffmpeg.log("Convert Options: #{@convert_options[:output][:s]}") if @whiny
               else
-                return nil
+                Ffmpeg.log("Source is Larger than Destination, Doing Nothing") if @whiny
+                #return nil
               end
             elsif @shrink_only
+              Ffmpeg.log("Shrink Only") if @whiny
               if current_width.to_i > target_width.to_i
                 # Keep aspect ratio
                 width = target_width.to_i
                 height = (width.to_f / (@meta[:aspect].to_f)).to_i
                 @convert_options[:output][:s] = "#{width.to_i/2*2}x#{height.to_i/2*2}"
+                Ffmpeg.log("Convert Options: #{@convert_options[:output][:s]}") if @whiny
               else
-                return nil
+                Ffmpeg.log("Source is Smaller than Destination, Doing Nothing") if @whiny
+                #return nil
               end
             elsif @pad_only
+              Ffmpeg.log("Pad Only") if @whiny
               # Keep aspect ratio
               width = target_width.to_i
               height = (width.to_f / (@meta[:aspect].to_f)).to_i
@@ -88,18 +101,25 @@ module Paperclip
               else
                 @convert_options[:output][:vf] = "scale=#{width}:-1,crop=#{width.to_i}:#{height.to_i}"
               end
+              Ffmpeg.log("Convert Options: #{@convert_options[:output][:s]}") if @whiny
             else
+              Ffmpeg.log("Resize") if @whiny
               # Keep aspect ratio
               width = target_width.to_i
               height = (width.to_f / (@meta[:aspect].to_f)).to_i
               @convert_options[:output][:s] = "#{width.to_i/2*2}x#{height.to_i/2*2}"
+              Ffmpeg.log("Convert Options: #{@convert_options[:output][:s]}") if @whiny
             end
           else
+            Ffmpeg.log("Not Keeping Aspect Ratio") if @whiny
             # Do not keep aspect ratio
             @convert_options[:output][:s] = "#{target_width.to_i/2*2}x#{target_height.to_i/2*2}"
+            Ffmpeg.log("Convert Options: #{@convert_options[:output][:s]}") if @whiny
           end
         end
       end
+
+      Ffmpeg.log("Adding Format") if @whiny
       # Add format
       case @format
       when 'jpg', 'jpeg', 'png', 'gif' # Images
@@ -107,20 +127,22 @@ module Paperclip
         @convert_options[:output][:vframes] = 1
         @convert_options[:output][:f] = 'image2'
       end
-      
+
+      Ffmpeg.log("Adding Source") if @whiny
       # Add source
       parameters << @convert_options[:input].map { |k,v| "-#{k.to_s} #{v} "}
       parameters << "-i :source"
       parameters << @convert_options[:output].map { |k,v| "-#{k.to_s} #{v} "}
       parameters << ":dest"
 
+      Ffmpeg.log("Building Parameters") if @whiny
       parameters = parameters.flatten.compact.join(" ").strip.squeeze(" ")
-      
-      Paperclip.log("[ffmpeg] #{parameters}")
+
+      Ffmpeg.log(parameters)
       begin
         success = Paperclip.run("ffmpeg", parameters, :source => "#{File.expand_path(src.path)}", :dest => File.expand_path(dst.path))
       rescue Cocaine::ExitStatusError => e
-        raise PaperclipError, "error while processing video for #{@basename}: #{e}" if @whiny
+        raise Paperclip::Error, "error while processing video for #{@basename}: #{e}" if @whiny
       end
 
       dst
@@ -129,7 +151,7 @@ module Paperclip
     def identify
       meta = {}
       command = "ffmpeg -i \"#{File.expand_path(@file.path)}\" 2>&1"
-      Paperclip.log(command)
+      Paperclip.log("[ffmpeg] #{command}")
       ffmpeg = IO.popen(command)
       ffmpeg.each("\r") do |line|
         if line =~ /((\d*)\s.?)fps,/
@@ -148,7 +170,13 @@ module Paperclip
           meta[:length] = $2.to_s + ":" + $3.to_s + ":" + $4.to_s
         end
       end
+      Paperclip.log("[ffmpeg] Command Success") if @whiny
       meta
+    end
+
+
+    def self.log message
+      Paperclip.log "[ffmpeg] #{message}"
     end
   end
   
