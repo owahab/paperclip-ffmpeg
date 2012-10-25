@@ -28,13 +28,14 @@ module Paperclip
       @pad_only        = @keep_aspect    && @geometry[-1,1] == '#'
       @enlarge_only    = @keep_aspect    && @geometry[-1,1] == '<'
       @shrink_only     = @keep_aspect    && @geometry[-1,1] == '>'
-      @whiny           = options[:whiny].nil? ? true : options[:whiny]
+      @whiny           = options[:whiny] || true
       @format          = options[:format]
-      @time            = options[:time].nil? ? 3 : options[:time]
+      @time            = options[:time] || 3
       @current_format  = File.extname(@file.path)
       @basename        = File.basename(@file.path, @current_format)
       @meta            = identify
-      @pad_color       = options[:pad_color].nil? ? "black" : options[:pad_color]
+      @pad_color       = options[:pad_color] || "black"
+      @qscale          = options[:qscale] || 3.5
       attachment.instance_write(:meta, @meta)
     end
     # Performs the transcoding of the +file+ into a thumbnail/video. Returns the Tempfile
@@ -119,6 +120,8 @@ module Paperclip
         end
       end
 
+      @convert_options[:output][:qscale] = @qscale.to_s
+      
       Ffmpeg.log("Adding Format") if @whiny
       # Add format
       case @format
