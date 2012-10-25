@@ -21,20 +21,21 @@ module Paperclip
           @convert_options[:output].reverse_merge! options[:convert_options][:output]
         end
       end
-      
+
       @geometry        = options[:geometry]
       @file            = file
       @keep_aspect     = !@geometry.nil? && @geometry[-1,1] != '!'
       @pad_only        = @keep_aspect    && @geometry[-1,1] == '#'
       @enlarge_only    = @keep_aspect    && @geometry[-1,1] == '<'
       @shrink_only     = @keep_aspect    && @geometry[-1,1] == '>'
-      @whiny           = options[:whiny].nil? ? true : options[:whiny]
+      @whiny           = options[:whiny] || true
       @format          = options[:format]
-      @time            = options[:time].nil? ? 3 : options[:time]
+      @time            = options[:time] || 3
       @current_format  = File.extname(@file.path)
       @basename        = File.basename(@file.path, @current_format)
       @meta            = identify
-      @pad_color       = options[:pad_color].nil? ? "black" : options[:pad_color]
+      @pad_color       = options[:pad_color] || "black"
+      @qscale          = options[:qscale]
       attachment.instance_write(:meta, @meta)
     end
     # Performs the transcoding of the +file+ into a thumbnail/video. Returns the Tempfile
@@ -46,7 +47,7 @@ module Paperclip
       dst = Tempfile.new([@basename, @format ? ".#{@format}" : ''])
       Ffmpeg.log("Destination File Built") if @whiny
       dst.binmode
-      
+
       parameters = []
 
       Ffmpeg.log("Adding Geometry") if @whiny
@@ -119,6 +120,8 @@ module Paperclip
         end
       end
 
+      @convert_options[:output][:qscale] = @qscale.to_s if @qscale
+
       Ffmpeg.log("Adding Format") if @whiny
       # Add format
       case @format
@@ -147,7 +150,7 @@ module Paperclip
 
       dst
     end
-    
+
     def identify
       meta = {}
       command = "ffmpeg -i \"#{File.expand_path(@file.path)}\" 2>&1"
@@ -179,7 +182,7 @@ module Paperclip
       Paperclip.log "[ffmpeg] #{message}"
     end
   end
-  
+
   class Attachment
     def meta
       instance_read(:meta)
