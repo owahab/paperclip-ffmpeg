@@ -3,7 +3,7 @@ $:.push File.expand_path("../lib", __FILE__)
 
 Gem::Specification.new do |s|
   s.name        = "paperclip-ffmpeg"
-  s.version     = '0.9.3'
+  s.version     = '0.9.4'
   s.platform    = Gem::Platform::RUBY
   s.authors     = ["Omar Abdel-Wahab"]
   s.email       = ["owahab@gmail.com"]
@@ -19,4 +19,5 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
   
   s.add_dependency('paperclip', '>=2.5.2')
+  s.add_dependency('paperclip', '>=0.9.2')
 end
