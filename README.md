@@ -17,26 +17,32 @@ directory to its path.
 
 In development mode, you might add this line to `config/environments/development.rb)`:
 
-    Paperclip.options[:command_path] = "/usr/local/bin/"
+```ruby
+Paperclip.options[:command_path] = "/usr/local/bin/"
+```
 
 Installation
 ------------
 
 Include the gem in your Gemfile:
 
-    gem "paperclip-ffmpeg"
+```ruby
+gem "paperclip-ffmpeg"
+```
 
 Quick Start
 -----------
 
 In your model:
 
-    class User < ActiveRecord::Base
-      has_attached_file :avatar, :styles => { 
-          :medium => { :geometry => "640x480", :format => 'flv' }
-          :thumb => { :geometry => "100x100#", :format => 'jpg', :time => 10 }
-        }, :processors => [:ffmpeg]
-    end
+```ruby
+class User < ActiveRecord::Base
+  has_attached_file :avatar, :styles => { 
+    :medium => { :geometry => "640x480", :format => 'flv' }
+    :thumb => { :geometry => "100x100#", :format => 'jpg', :time => 10 }
+  }, :processors => [:ffmpeg]
+end
+```
 
 This will produce:
 
@@ -52,11 +58,13 @@ When ffmpeg produces mp4 files, it places the moov atom at the end which makes i
 
 In your model:
 
-    class Lesson < ActiveRecord::Base
-      has_attached_file :video, :styles => {
-          :mobile => {:geometry => "400x300", :format => 'mp4', :streaming => true}
-      }, :processors => [:ffmpeg, :qtfaststart]
-    end
+```ruby
+class Lesson < ActiveRecord::Base
+  has_attached_file :video, :styles => {
+    :mobile => {:geometry => "400x300", :format => 'mp4', :streaming => true}
+  }, :processors => [:ffmpeg, :qtfaststart]
+end
+```
 
 See [danielgtaylor/qtfaststart](https://github.com/danielgtaylor/qtfaststart) for instructions on how to setup qtfaststart.
 
