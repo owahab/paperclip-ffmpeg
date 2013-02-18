@@ -96,10 +96,13 @@ module Paperclip
               height = (width.to_f / (@meta[:aspect].to_f)).to_i
               # We should add half the delta as a padding offset Y
               pad_y = (target_height.to_f - height.to_f) / 2
+              # There could be options already set
+              @convert_options[:output][:vf][/\A/] = ',' if @convert_options[:output][:vf]
+              @convert_options[:output][:vf] ||= ''
               if pad_y > 0
-                @convert_options[:output][:vf] = "scale=#{width}:-1,pad=#{width.to_i}:#{target_height.to_i}:0:#{pad_y}:#@pad_color"
+                @convert_options[:output][:vf][/\A/] = "scale=#{width}:-1,pad=#{width.to_i}:#{target_height.to_i}:0:#{pad_y}:#@pad_color"
               else
-                @convert_options[:output][:vf] = "scale=#{width}:-1,crop=#{width.to_i}:#{height.to_i}"
+                @convert_options[:output][:vf][/\A/] = "scale=#{width}:-1,crop=#{width.to_i}:#{height.to_i}"
               end
               Ffmpeg.log("Convert Options: #{@convert_options[:output][:s]}") if @whiny
             else
@@ -130,10 +133,11 @@ module Paperclip
 
       Ffmpeg.log("Adding Source") if @whiny
       # Add source
-      parameters << @convert_options[:input].map { |k,v| "-#{k.to_s} #{v} "}
+      # Validations on the values. These could be either nil.
+      parameters << @convert_options[:input].map { |k,v| "-#{k.to_s} #{v} " if !v.nil? && (v.is_a?(Numeric) || !v.empty?) }
       parameters << "-i :source"
-      parameters << @convert_options[:output].map { |k,v| "-#{k.to_s} #{v} "}
-      parameters << ":dest"
+      parameters << @convert_options[:output].map { |k,v| "-#{k.to_s} #{v} " if !v.nil? && (v.is_a?(Numeric) || !v.empty?) }
+      parameters << "-y :dest"
 
       Ffmpeg.log("Building Parameters") if @whiny
       parameters = parameters.flatten.compact.join(" ").strip.squeeze(" ")
