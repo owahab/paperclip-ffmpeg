@@ -1,5 +1,6 @@
 Paperclip FFMPEG
 ================
+[![Build Status](https://travis-ci.org/owahab/paperclip-ffmpeg.png?branch=master)](https://travis-ci.org/owahab/paperclip-ffmpeg)
 
 Adding video handling to Paperclip via ffmpeg.
 This gem has been tested under Linux and Mac OS X, YMMV under Windows.
