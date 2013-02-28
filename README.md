@@ -13,7 +13,7 @@ that it does, on your command line, run `which ffmpeg`.
 This will give you the path where ffmpeg is installed. For
 example, it might return `/usr/local/bin/ffmpeg`.
 
-Then, in your environment config file, let Paperclip know to look there by adding that 
+Then, in your environment config file, let Paperclip know to look there by adding that
 directory to its path.
 
 In development mode, you might add this line to `config/environments/development.rb)`:
@@ -38,8 +38,8 @@ In your model:
 
 ```ruby
 class User < ActiveRecord::Base
-  has_attached_file :avatar, :styles => { 
-    :medium => { :geometry => "640x480", :format => 'flv' }
+  has_attached_file :avatar, :styles => {
+    :medium => { :geometry => "640x480", :format => 'flv' },
     :thumb => { :geometry => "100x100#", :format => 'jpg', :time => 10 }
   }, :processors => [:ffmpeg]
 end
