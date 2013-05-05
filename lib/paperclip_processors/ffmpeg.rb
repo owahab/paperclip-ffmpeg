@@ -129,6 +129,14 @@ module Paperclip
         @convert_options[:input][:ss] = @time
         @convert_options[:output][:vframes] = 1
         @convert_options[:output][:f] = 'image2'
+      when 'webm' # WebM
+        @convert_options[:output][:acodec] = 'libvorbis'
+        @convert_options[:output][:vcodec] = 'libvpx'
+        @convert_options[:output][:f] = 'webm'
+      when 'ogv' # Ogg Theora
+        @convert_options[:output][:acodec] = 'libvorbis'
+        @convert_options[:output][:vcodec] = 'libtheora'
+        @convert_options[:output][:f] = 'ogg'
       end
 
       Ffmpeg.log("Adding Source") if @whiny
