@@ -22,6 +22,7 @@ module Paperclip
         end
       end
       
+      @streaming       = options[:streaming]
       @geometry        = options[:geometry]
       @file            = file
       @keep_aspect     = !@geometry.nil? && @geometry[-1,1] != '!'
@@ -129,14 +130,23 @@ module Paperclip
         @convert_options[:input][:ss] = @time
         @convert_options[:output][:vframes] = 1
         @convert_options[:output][:f] = 'image2'
-      when 'webm' # WebM
+      when 'webm', 'vp8' # WebM
         @convert_options[:output][:acodec] = 'libvorbis'
         @convert_options[:output][:vcodec] = 'libvpx'
         @convert_options[:output][:f] = 'webm'
-      when 'ogv' # Ogg Theora
+      when 'ogv', 'theora' # Ogg Theora
         @convert_options[:output][:acodec] = 'libvorbis'
         @convert_options[:output][:vcodec] = 'libtheora'
         @convert_options[:output][:f] = 'ogg'
+      when 'mp4', 'h264' # H-264
+        @convert_options[:output][:acodec] = 'libfaac'
+        @convert_options[:output][:vcodec] = 'libx264'
+        @convert_options[:output][:f] = 'mp4'
+      end
+      
+      if @streaming
+        FFmpeg.log("Adding fast start for streaming") if @whiny
+        @convert_options[:output][:movflags] = '+faststart'
       end
 
       Ffmpeg.log("Adding Source") if @whiny
