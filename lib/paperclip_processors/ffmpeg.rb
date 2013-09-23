@@ -176,7 +176,7 @@ module Paperclip
         # Video: h264, yuvj420p, 640x480 [PAR 72:72 DAR 4:3], 10301 kb/s, 30 fps, 30 tbr, 600 tbn, 600 tbc
         if line =~ /Video:(.*)/
            v = $1.to_s
-           size = match(/\d{3,5}x\d{3,5}/)
+           size = v.match(/\d{3,5}x\d{3,5}/)
            meta[:size] = size.to_s
            meta[:aspect] = size.split('x').first.to_f / size.split('x').last.to_f
          end
