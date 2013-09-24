@@ -3,8 +3,9 @@ $:.push File.expand_path("../lib", __FILE__)
 
 Gem::Specification.new do |s|
   s.name        = "paperclip-ffmpeg"
-  s.version     = '0.12.1'
+  s.version     = '1.0.0'
   s.platform    = Gem::Platform::RUBY
+  s.licenses    = 'MIT'
   s.authors     = ["Omar Abdel-Wahab"]
   s.email       = ["owahab@gmail.com"]
   s.homepage    = "http://github.com/owahab/paperclip-ffmpeg"

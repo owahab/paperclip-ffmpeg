@@ -72,4 +72,4 @@ See [danielgtaylor/qtfaststart](https://github.com/danielgtaylor/qtfaststart) fo
 License
 -------
 
-Licensed under BSD license.
+Licensed under MIT license.
