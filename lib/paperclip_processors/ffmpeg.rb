@@ -165,10 +165,10 @@ module Paperclip
     
     def identify
       meta = {}
-      command = "ffmpeg -i \"#{File.expand_path(@file.path)}\" 2>&1"
+      command = "ffprobe \"#{File.expand_path(@file.path)}\" 2>&1"
       Paperclip.log("[ffmpeg] #{command}")
-      ffmpeg = IO.popen(command)
-      ffmpeg.each("\r") do |line|
+      ffmpeg = Cocaine::CommandLine.new(command).run
+      ffmpeg.split("\n").each do |line|
         if line =~ /(([\d\.]*)\s.?)fps,/
           meta[:fps] = $1.to_i
         end
