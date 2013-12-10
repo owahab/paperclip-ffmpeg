@@ -52,6 +52,8 @@ This will produce:
 
 You may optionally add `<attachment>_meta` to your model and paperclip-ffmpeg will add information about the processed video.
 
+You may optionally add `auto_rotate: true` to automatically straighten videos recoreded in a non-landscape mode.
+
 Streaming Video
 -------------------
 
