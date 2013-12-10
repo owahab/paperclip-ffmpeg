@@ -35,6 +35,7 @@ module Paperclip
       @basename        = File.basename(@file.path, @current_format)
       @meta            = identify
       @pad_color       = options[:pad_color].nil? ? "black" : options[:pad_color]
+      @auto_rotate     = options[:auto_rotate].nil? ? false : options[:auto_rotate]
       attachment.instance_write(:meta, @meta)
     end
     # Performs the transcoding of the +file+ into a thumbnail/video. Returns the Tempfile
@@ -122,6 +123,19 @@ module Paperclip
         end
       end
 
+      # If file has rotation, rotate it back to horizontal
+      if @auto_rotate && !@meta[:rotate].nil?
+        Ffmpeg.log("Adding rotation #{@meta[:rotate]}") if @whiny
+        case @meta[:rotate]
+        when 90
+          @convert_options[:output][:vf] = 'transpose=1'
+        when 180
+          @convert_options[:output][:vf] = 'vflip, hflip'
+        when 270
+          @convert_options[:output][:vf] = 'transpose=2'
+        end
+      end
+
       Ffmpeg.log("Adding Format") if @whiny
       # Add format
       case @format
@@ -183,6 +197,9 @@ module Paperclip
         # Matching Duration: 00:01:31.66, start: 0.000000, bitrate: 10404 kb/s
         if line =~ /Duration:(\s.?(\d*):(\d*):(\d*\.\d*))/
           meta[:length] = $2.to_s + ":" + $3.to_s + ":" + $4.to_s
+        end
+        if line =~ /rotate\s*:\s(\d*)/ 
+          meta[:rotate] = $1.to_i 
         end
       end
       Paperclip.log("[ffmpeg] Command Success") if @whiny
