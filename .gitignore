@@ -3,5 +3,5 @@
 Gemfile.lock
 pkg/*
 spec/dummy/public/system/videos/*
-spec/dummy/db/*.sqlite3
+spec/dummy/db/development.sqlite3
 spec/dummy/log/*
