@@ -69,6 +69,20 @@ end
 
 See [danielgtaylor/qtfaststart](https://github.com/danielgtaylor/qtfaststart) for instructions on how to setup qtfaststart.
 
+FFmpeg Options
+-------------------
+
+ffmpeg accepts a variety of options for video and audio like (-ac, -vn). To handle this, paperclip-ffmpeg accepts any options and passes them directly to the ffmpeg command via `convert_options` hash which includes the `input` and `output` options
+
+```ruby
+class Lesson < ActiveRecord::Base
+	has_attached_file :media, :styles => {
+    :medium => { :geometry => "640x480", :format => 'flv', :convert_options => {:output => {:ar => 44100}} },
+    :large => { :geometry => "1024x576", :format => 'flv', :convert_options => {:output => {:ar => 44100}} },
+  }, :processors => [:ffmpeg]
+end
+```
+
 License
 -------
 
