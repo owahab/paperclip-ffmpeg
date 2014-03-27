@@ -62,7 +62,7 @@ module Paperclip
           @convert_options[:output][:vf] = 'transpose=2'
         end
         if [90, 100, 270].include? @meta[:rotate]
-          rotated =true
+          rotated = true
         end
       end
 
