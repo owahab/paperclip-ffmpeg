@@ -61,8 +61,8 @@ module Paperclip
         when 270
           @convert_options[:output][:vf] = 'transpose=2'
         end
-        if @meta[:rotate].to_s =~ %r(\A(90|180|270)\z)
-          rotated = true
+        if [90, 100, 270].include? @meta[:rotate]
+          rotated =true
         end
       end
 
