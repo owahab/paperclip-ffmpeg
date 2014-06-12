@@ -179,7 +179,7 @@ module Paperclip
     
     def identify
       meta = {}
-      command = "ffprobe \"#{File.expand_path(@file.path)}\" 2>&1"
+      command = "avprobe \"#{File.expand_path(@file.path)}\" 2>&1"
       Paperclip.log("[avconv] #{command}")
       avconv = Cocaine::CommandLine.new(command).run
       avconv.split("\n").each do |line|
