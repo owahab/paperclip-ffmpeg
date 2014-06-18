@@ -216,16 +216,15 @@ module Paperclip
     def self.detect_ffmpeg_or_avconv
       # Check whether ffmpeg or avconv is installed
       command = "if command -v ffmpeg 2>/dev/null; then echo \"ffmpeg\"; else echo \"avconv\"; fi"
-      Paperclip.log("[ffmpeg] #{command}")
+      Paperclip.log("[ffmpeg] #{command}") if @whiny
       result = Cocaine::CommandLine.new(command).run
-      Paperclip.log("[ffmpeg] Result of command: #{result}")
-
+      Paperclip.log("[ffmpeg] Result of command: #{result}") if @whiny
       case result
         when /ffmpeg/
-          Paperclip.log("[ffmpeg] Result of command: #{"ffmpeg"}")
+          Paperclip.log("[ffmpeg] Result of command: #{"ffmpeg"}") if @whiny
           return "ffmpeg"
         when /avconv/
-          Paperclip.log("[ffmpeg] Result of command: #{"avconv"}")
+          Paperclip.log("[ffmpeg] Result of command: #{"avconv"}") if @whiny
           return "avconv"
         else
           return "Error: no video conversion library detected. Please install ffmpeg or avconv."
@@ -235,16 +234,15 @@ module Paperclip
     def self.detect_ffprobe_or_avprobe
       # Check whether ffprobe or avprobe is installed
       command = "if command -v ffprobe 2>/dev/null; then echo \"ffprobe\"; else echo \"avprobe\"; fi"
-      Paperclip.log("[ffmpeg] #{command}")
+      Paperclip.log("[ffmpeg] #{command}") if @whiny
       result = Cocaine::CommandLine.new(command).run
-      Paperclip.log("[ffmpeg] Result of command: #{result}")
-
+      Paperclip.log("[ffmpeg] Result of command: #{result}") if @whiny
       case result
         when /ffprobe/
-          Paperclip.log("[ffmpeg] Result of command: #{"ffprobe"}")
+          Paperclip.log("[ffmpeg] Result of command: #{"ffprobe"}") if @whiny
           return "ffprobe"
         when /avprobe/
-          Paperclip.log("[ffmpeg] Result of command: #{"avprobe"}")
+          Paperclip.log("[ffmpeg] Result of command: #{"avprobe"}") if @whiny
           return "avprobe"
         else
           return "Error: no video conversion library detected. Please install ffmpeg or avconv."
