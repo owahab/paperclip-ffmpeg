@@ -221,10 +221,10 @@ module Paperclip
       Paperclip.log("[ffmpeg] Result of command: #{result}")
 
       case result
-        when "ffmpeg"
+        when /ffmpeg/
           Paperclip.log("[ffmpeg] Result of command: #{"ffmpeg"}")
           return "ffmpeg"
-        when "avconv"
+        when /avconv/
           Paperclip.log("[ffmpeg] Result of command: #{"avconv"}")
           return "avconv"
         else
@@ -240,10 +240,10 @@ module Paperclip
       Paperclip.log("[ffmpeg] Result of command: #{result}")
 
       case result
-        when "ffprobe"
+        when /ffprobe/
           Paperclip.log("[ffmpeg] Result of command: #{"ffprobe"}")
           return "ffprobe"
-        when "avprobe"
+        when /avprobe/
           Paperclip.log("[ffmpeg] Result of command: #{"avprobe"}")
           return "avprobe"
         else
