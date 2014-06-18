@@ -169,7 +169,8 @@ module Paperclip
 
       Ffmpeg.log(parameters)
       begin
-        success = Paperclip.run("ffmpeg", parameters, :source => "#{File.expand_path(src.path)}", :dest => File.expand_path(dst.path))
+        av_lib_version = Ffmpeg.detect_ffmpeg_or_avconv
+        success = Paperclip.run(av_lib_version, parameters, :source => "#{File.expand_path(src.path)}", :dest => File.expand_path(dst.path))
       rescue Cocaine::ExitStatusError => e
         raise Paperclip::Error, "error while processing video for #{@basename}: #{e}" if @whiny
       end
@@ -179,7 +180,8 @@ module Paperclip
     
     def identify
       meta = {}
-      command = "ffprobe \"#{File.expand_path(@file.path)}\" 2>&1"
+      av_lib_version = Ffmpeg.detect_ffprobe_or_avprobe
+      command = "#{av_lib_version} \"#{File.expand_path(@file.path)}\" 2>&1"
       Paperclip.log("[ffmpeg] #{command}")
       ffmpeg = Cocaine::CommandLine.new(command).run
       ffmpeg.split("\n").each do |line|
@@ -209,6 +211,38 @@ module Paperclip
 
     def self.log message
       Paperclip.log "[ffmpeg] #{message}"
+    end
+
+    def self.detect_ffmpeg_or_avconv
+      # Check whether ffmpeg or avconv is installed
+      command = 'if command -v ffmpeg 2>/dev/null; then         echo "ffmpeg";     else         echo "avconv";     fi'
+      Paperclip.log("[ffmpeg] #{command}")
+      result = Cocaine::CommandLine.new(command).run
+
+      case result
+      when "ffmpeg"
+        return "ffmpeg"
+      when "avconv"
+        return "avconv"
+      else
+        return "Error: no video conversion library detected. Please install ffmpeg or avconv."
+      end
+    end
+
+    def self.detect_ffprobe_or_avprobe
+      # Check whether ffprobe or avprobe is installed
+      command = 'if command -v ffprobe 2>/dev/null; then         echo "ffprobe";     else         echo "avprobe";     fi'
+      Paperclip.log("[ffmpeg] #{command}")
+      result = Cocaine::CommandLine.new(command).run
+
+      case result
+      when "ffprobe"
+        return "ffprobe"
+      when "avprobe"
+        return "avprobe"
+      else
+        return "Error: no video conversion library detected. Please install ffmpeg or avconv."
+      end
     end
   end
   
