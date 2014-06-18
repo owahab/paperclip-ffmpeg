@@ -221,12 +221,14 @@ module Paperclip
       Paperclip.log("[ffmpeg] Result of command: #{result}")
 
       case result
-      when "ffmpeg"
-        return "ffmpeg"
-      when "avconv"
-        return "avconv"
-      else
-        return "Error: no video conversion library detected. Please install ffmpeg or avconv."
+        when "ffmpeg"
+          Paperclip.log("[ffmpeg] Result of command: #{"ffmpeg"}")
+          return "ffmpeg"
+        when "avconv"
+          Paperclip.log("[ffmpeg] Result of command: #{"avconv"}")
+          return "avconv"
+        else
+          return "Error: no video conversion library detected. Please install ffmpeg or avconv."
       end
     end
 
@@ -236,14 +238,16 @@ module Paperclip
       Paperclip.log("[ffmpeg] #{command}")
       result = Cocaine::CommandLine.new(command).run
       Paperclip.log("[ffmpeg] Result of command: #{result}")
-      
+
       case result
-      when "ffprobe"
-        return "ffprobe"
-      when "avprobe"
-        return "avprobe"
-      else
-        return "Error: no video conversion library detected. Please install ffmpeg or avconv."
+        when "ffprobe"
+          Paperclip.log("[ffmpeg] Result of command: #{"ffprobe"}")
+          return "ffprobe"
+        when "avprobe"
+          Paperclip.log("[ffmpeg] Result of command: #{"avprobe"}")
+          return "avprobe"
+        else
+          return "Error: no video conversion library detected. Please install ffmpeg or avconv."
       end
     end
   end
