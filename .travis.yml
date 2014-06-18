@@ -1,0 +1,7 @@
+language: ruby
+rvm:
+	- 1.9.3
+	- 2.1.2
+before_install:
+	- sudo apt-get update
+	- sudo apt-get install --qq ffmpeg
