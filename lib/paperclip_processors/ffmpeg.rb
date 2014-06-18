@@ -215,9 +215,10 @@ module Paperclip
 
     def self.detect_ffmpeg_or_avconv
       # Check whether ffmpeg or avconv is installed
-      command = 'if command -v ffmpeg 2>/dev/null; then         echo "ffmpeg";     else         echo "avconv";     fi'
+      command = "if command -v ffmpeg 2>/dev/null; then echo \"ffmpeg\"; else echo \"avconv\"; fi"
       Paperclip.log("[ffmpeg] #{command}")
       result = Cocaine::CommandLine.new(command).run
+      Paperclip.log("[ffmpeg] Result of command: #{result}")
 
       case result
       when "ffmpeg"
@@ -231,10 +232,11 @@ module Paperclip
 
     def self.detect_ffprobe_or_avprobe
       # Check whether ffprobe or avprobe is installed
-      command = 'if command -v ffprobe 2>/dev/null; then         echo "ffprobe";     else         echo "avprobe";     fi'
+      command = "if command -v ffprobe 2>/dev/null; then echo \"ffprobe\"; else echo \"avprobe\"; fi"
       Paperclip.log("[ffmpeg] #{command}")
       result = Cocaine::CommandLine.new(command).run
-
+      Paperclip.log("[ffmpeg] Result of command: #{result}")
+      
       case result
       when "ffprobe"
         return "ffprobe"
