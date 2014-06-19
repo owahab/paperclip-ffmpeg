@@ -8,7 +8,7 @@ This gem has been tested under Linux and Mac OS X, YMMV under Windows.
 Requirements
 ------------
 
-FFMPEG must be installed and Paperclip must have access to it. To ensure
+FFMPEG or AVCONV must be installed and Paperclip must have access to it. To ensure
 that it does, on your command line, run `which ffmpeg`.
 This will give you the path where ffmpeg is installed. For
 example, it might return `/usr/local/bin/ffmpeg`.

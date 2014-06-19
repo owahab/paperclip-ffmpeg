@@ -6,5 +6,5 @@ gemspec
 group :test do
   gem 'rake'
   gem 'bundler'
-  gem 'rspec'
+  gem 'rspec', '~> 2.14'
 end
