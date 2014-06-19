@@ -35,6 +35,7 @@ module Paperclip
       @basename        = File.basename(@file.path, @current_format)
       @meta            = identify
       @pad_color       = options[:pad_color].nil? ? "black" : options[:pad_color]
+      @auto_rotate     = options[:auto_rotate].nil? ? false : options[:auto_rotate]
       attachment.instance_write(:meta, @meta)
     end
     # Performs the transcoding of the +file+ into a thumbnail/video. Returns the Tempfile
@@ -122,6 +123,19 @@ module Paperclip
         end
       end
 
+      # If file has rotation, rotate it back to horizontal
+      if @auto_rotate && !@meta[:rotate].nil?
+        Ffmpeg.log("Adding rotation #{@meta[:rotate]}") if @whiny
+        case @meta[:rotate]
+        when 90
+          @convert_options[:output][:vf] = 'transpose=1'
+        when 180
+          @convert_options[:output][:vf] = 'vflip, hflip'
+        when 270
+          @convert_options[:output][:vf] = 'transpose=2'
+        end
+      end
+
       Ffmpeg.log("Adding Format") if @whiny
       # Add format
       case @format
@@ -155,7 +169,8 @@ module Paperclip
 
       Ffmpeg.log(parameters)
       begin
-        success = Paperclip.run("ffmpeg", parameters, :source => "#{File.expand_path(src.path)}", :dest => File.expand_path(dst.path))
+        av_lib_version = Ffmpeg.detect_ffmpeg_or_avconv
+        success = Paperclip.run(av_lib_version, parameters, :source => "#{File.expand_path(src.path)}", :dest => File.expand_path(dst.path))
       rescue Cocaine::ExitStatusError => e
         raise Paperclip::Error, "error while processing video for #{@basename}: #{e}" if @whiny
       end
@@ -165,7 +180,8 @@ module Paperclip
     
     def identify
       meta = {}
-      command = "ffprobe \"#{File.expand_path(@file.path)}\" 2>&1"
+      av_lib_version = Ffmpeg.detect_ffprobe_or_avprobe
+      command = "#{av_lib_version} \"#{File.expand_path(@file.path)}\" 2>&1"
       Paperclip.log("[ffmpeg] #{command}")
       ffmpeg = Cocaine::CommandLine.new(command).run
       ffmpeg.split("\n").each do |line|
@@ -184,6 +200,9 @@ module Paperclip
         if line =~ /Duration:(\s.?(\d*):(\d*):(\d*\.\d*))/
           meta[:length] = $2.to_s + ":" + $3.to_s + ":" + $4.to_s
         end
+        if line =~ /rotate\s*:\s(\d*)/ 
+          meta[:rotate] = $1.to_i 
+        end
       end
       Paperclip.log("[ffmpeg] Command Success") if @whiny
       meta
@@ -192,6 +211,51 @@ module Paperclip
 
     def self.log message
       Paperclip.log "[ffmpeg] #{message}"
+    end
+
+    def self.detect_ffmpeg_or_avconv
+      # Check whether ffmpeg or avconv is installed
+      result = Ffmpeg.detect_command("ffmpeg")
+      Ffmpeg.log("Result of command: #{result}") if @whiny
+      if result == true
+        Ffmpeg.log("Result of command: #{"ffmpeg"}") if @whiny
+          return "ffmpeg"
+      elsif result == false
+        Ffmpeg.log("Result of command: #{"avconv"}") if @whiny
+          return "avconv"
+      else
+        return "Error: no video conversion library detected. Please install ffmpeg or avconv."
+      end
+    end
+
+    def self.detect_ffprobe_or_avprobe
+      # Check whether ffprobe or avprobe is installed
+      result = Ffmpeg.detect_command("ffprobe")
+      Ffmpeg.log("Result of command: #{result}") if @whiny
+      if result == true
+        Ffmpeg.log("Result of command: #{"ffprobe"}") if @whiny
+        return "ffprobe"
+      elsif result == false
+        Ffmpeg.log("Result of command: #{"avprobe"}") if @whiny
+        return "avprobe"
+      else
+        return "Error: no video conversion library detected. Please install ffmpeg or avconv."
+      end
+    end
+
+    def self.detect_command(command)
+      command = "if command -v #{command} 2>/dev/null; then echo \"true\"; else echo \"false\"; fi"
+      Ffmpeg.log(command) if @whiny
+      result = Cocaine::CommandLine.new(command).run
+      Ffmpeg.log("Result of command: #{result}") if @whiny
+      case result
+        when /true/
+          return true
+        when /false/
+          return false
+        else
+          return nil
+      end
     end
   end
   

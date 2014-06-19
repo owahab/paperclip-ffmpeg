@@ -8,7 +8,7 @@ This gem has been tested under Linux and Mac OS X, YMMV under Windows.
 Requirements
 ------------
 
-FFMPEG must be installed and Paperclip must have access to it. To ensure
+FFMPEG or AVCONV must be installed and Paperclip must have access to it. To ensure
 that it does, on your command line, run `which ffmpeg`.
 This will give you the path where ffmpeg is installed. For
 example, it might return `/usr/local/bin/ffmpeg`.
@@ -70,6 +70,20 @@ end
 ```
 
 See [danielgtaylor/qtfaststart](https://github.com/danielgtaylor/qtfaststart) for instructions on how to setup qtfaststart.
+
+FFmpeg Options
+-------------------
+
+ffmpeg accepts a variety of options for video and audio like (-ac, -vn). To handle this, paperclip-ffmpeg accepts any options and passes them directly to the ffmpeg command via `convert_options` hash which includes the `input` and `output` options
+
+```ruby
+class Lesson < ActiveRecord::Base
+	has_attached_file :media, :styles => {
+    :medium => { :geometry => "640x480", :format => 'flv', :convert_options => {:output => {:ar => 44100}} },
+    :large => { :geometry => "1024x576", :format => 'flv', :convert_options => {:output => {:ar => 44100}} },
+  }, :processors => [:ffmpeg]
+end
+```
 
 License
 -------
