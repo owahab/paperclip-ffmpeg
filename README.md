@@ -85,6 +85,19 @@ class Lesson < ActiveRecord::Base
 end
 ```
 
+Contribution
+-------
+Kudos goes to [all contributors](https://github.com/owahab/paperclip-ffmpeg/graphs/contributors) for their amazing work.
+
+If you'd like to contribute a feature or bugfix: Thanks! To make sure your
+fix/feature has a high chance of being included, please read the following
+guidelines:
+
+1. Post a new GitHub Issue[http://github.com/owahab/paperclip-ffmpeg/issues].
+2. Make sure there are tests! We will not accept any patch that is not tested.
+   It's a rare time when explicit tests aren't needed.
+
+
 License
 -------
 
