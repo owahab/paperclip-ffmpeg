@@ -21,7 +21,7 @@ module Paperclip
           @convert_options[:output].reverse_merge! options[:convert_options][:output]
         end
       end
-      
+
       @geometry        = options[:geometry]
       @file            = file
       @keep_aspect     = !@geometry.nil? && @geometry[-1,1] != '!'
@@ -47,10 +47,24 @@ module Paperclip
       dst = Tempfile.new([@basename, @format ? ".#{@format}" : ''])
       Ffmpeg.log("Destination File Built") if @whiny
       dst.binmode
-      
+
       parameters = []
 
       Ffmpeg.log("Adding Geometry") if @whiny
+
+      # If file has rotation, rotate it back to horizontal
+      if @auto_rotate && !@meta[:rotate].nil?
+        Ffmpeg.log("Adding rotation #{@meta[:rotate]}") if @whiny
+        case @meta[:rotate]
+        when 90
+          @convert_options[:output][:vf] = 'transpose=1'
+        when 180
+          @convert_options[:output][:vf] = 'vflip,hflip'
+        when 270
+          @convert_options[:output][:vf] = 'transpose=2'
+        end
+      end
+
       # Add geometry
       if @geometry
         Ffmpeg.log("Extracting Target Dimensions") if @whiny
@@ -110,7 +124,15 @@ module Paperclip
               Ffmpeg.log("Resize") if @whiny
               # Keep aspect ratio
               width = target_width.to_i
-              height = (width.to_f / (@meta[:aspect].to_f)).to_i
+              height = if @meta[:rotate].in? [90, 270]
+                # target calculations are based on the meta info of
+                # the original (un-rotated) image, so we need to
+                # invert the aspect ratio when we're transposing the image
+                width * @meta[:aspect]
+              else
+                (width.to_f / (@meta[:aspect].to_f)).to_i
+              end
+
               @convert_options[:output][:s] = "#{width.to_i/2*2}x#{height.to_i/2*2}"
               Ffmpeg.log("Convert Options: #{@convert_options[:output][:s]}") if @whiny
             end
@@ -120,19 +142,6 @@ module Paperclip
             @convert_options[:output][:s] = "#{target_width.to_i/2*2}x#{target_height.to_i/2*2}"
             Ffmpeg.log("Convert Options: #{@convert_options[:output][:s]}") if @whiny
           end
-        end
-      end
-
-      # If file has rotation, rotate it back to horizontal
-      if @auto_rotate && !@meta[:rotate].nil?
-        Ffmpeg.log("Adding rotation #{@meta[:rotate]}") if @whiny
-        case @meta[:rotate]
-        when 90
-          @convert_options[:output][:vf] = 'transpose=1'
-        when 180
-          @convert_options[:output][:vf] = 'vflip, hflip'
-        when 270
-          @convert_options[:output][:vf] = 'transpose=2'
         end
       end
 
@@ -177,7 +186,7 @@ module Paperclip
 
       dst
     end
-    
+
     def identify
       meta = {}
       av_lib_version = Ffmpeg.detect_ffprobe_or_avprobe
@@ -200,8 +209,8 @@ module Paperclip
         if line =~ /Duration:(\s.?(\d*):(\d*):(\d*\.\d*))/
           meta[:length] = $2.to_s + ":" + $3.to_s + ":" + $4.to_s
         end
-        if line =~ /rotate\s*:\s(\d*)/ 
-          meta[:rotate] = $1.to_i 
+        if line =~ /rotate\s*:\s(\d*)/
+          meta[:rotate] = $1.to_i
         end
       end
       Paperclip.log("[ffmpeg] Command Success") if @whiny
@@ -258,7 +267,7 @@ module Paperclip
       end
     end
   end
-  
+
   class Attachment
     def meta
       instance_read(:meta)
