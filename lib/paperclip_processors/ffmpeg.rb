@@ -68,6 +68,20 @@ module Paperclip
       end
 
       Ffmpeg.log("Adding Geometry") if @whiny
+
+      # If file has rotation, rotate it back to horizontal
+      if @auto_rotate && !@meta[:rotate].nil?
+        Ffmpeg.log("Adding rotation #{@meta[:rotate]}") if @whiny
+        case @meta[:rotate]
+        when 90
+          @convert_options[:output][:vf] = 'transpose=1'
+        when 180
+          @convert_options[:output][:vf] = 'vflip,hflip'
+        when 270
+          @convert_options[:output][:vf] = 'transpose=2'
+        end
+      end
+
       # Add geometry
       if @geometry
         Ffmpeg.log("Extracting Target Dimensions") if @whiny
@@ -183,7 +197,15 @@ module Paperclip
       if @keep_aspect_mode == :save_height
         [(height.to_f * @meta[:aspect].to_f).to_i, height.to_i]
       else
-        [width.to_i, (width.to_f / @meta[:aspect].to_f).to_i]
+        width = target_width.to_i
+        height = if @meta[:rotate].in? [90, 270]
+          # target calculations are based on the meta info of
+          # the original (un-rotated) image, so we need to
+          # invert the aspect ratio when we're transposing the image
+          width * @meta[:aspect]
+        else
+          (width.to_f / (@meta[:aspect].to_f)).to_i
+        end
       end
     end
 
