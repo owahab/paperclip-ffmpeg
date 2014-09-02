@@ -21,21 +21,22 @@ module Paperclip
           @convert_options[:output].reverse_merge! options[:convert_options][:output]
         end
       end
-      
-      @geometry        = options[:geometry]
-      @file            = file
-      @keep_aspect     = !@geometry.nil? && @geometry[-1,1] != '!'
-      @pad_only        = @keep_aspect    && @geometry[-1,1] == '#'
-      @enlarge_only    = @keep_aspect    && @geometry[-1,1] == '<'
-      @shrink_only     = @keep_aspect    && @geometry[-1,1] == '>'
-      @whiny           = options[:whiny].nil? ? true : options[:whiny]
-      @format          = options[:format]
-      @time            = options[:time].nil? ? 3 : options[:time]
-      @current_format  = File.extname(@file.path)
-      @basename        = File.basename(@file.path, @current_format)
-      @meta            = identify
-      @pad_color       = options[:pad_color].nil? ? "black" : options[:pad_color]
-      @auto_rotate     = options[:auto_rotate].nil? ? false : options[:auto_rotate]
+
+      @geometry         = options[:geometry]
+      @file             = file
+      @keep_aspect      = !@geometry.nil? && @geometry[-1,1] != '!'
+      @pad_only         = @keep_aspect    && @geometry[-1,1] == '#'
+      @enlarge_only     = @keep_aspect    && @geometry[-1,1] == '<'
+      @shrink_only      = @keep_aspect    && @geometry[-1,1] == '>'
+      @keep_aspect_mode = options[:keep_aspect_mode] == 'save_height' ? :save_height : :save_width
+      @whiny            = options[:whiny].nil? ? true : options[:whiny]
+      @format           = options[:format]
+      @time             = options[:time].nil? ? 3 : options[:time]
+      @current_format   = File.extname(@file.path)
+      @basename         = File.basename(@file.path, @current_format)
+      @meta             = identify
+      @pad_color        = options[:pad_color].nil? ? "black" : options[:pad_color]
+      @auto_rotate      = options[:auto_rotate].nil? ? false : options[:auto_rotate]
       attachment.instance_write(:meta, @meta)
     end
     # Performs the transcoding of the +file+ into a thumbnail/video. Returns the Tempfile
@@ -47,7 +48,7 @@ module Paperclip
       dst = Tempfile.new([@basename, @format ? ".#{@format}" : ''])
       Ffmpeg.log("Destination File Built") if @whiny
       dst.binmode
-      
+
       parameters = []
 
       # If file has rotation, rotate it back to horizontal
@@ -98,8 +99,7 @@ module Paperclip
               Ffmpeg.log("Shrink Only") if @whiny
               if current_width.to_i > target_width.to_i
                 # Keep aspect ratio
-                width = target_width.to_i
-                height = (width.to_f / (@meta[:aspect].to_f)).to_i
+                width, height = calculate_output_file_dimensions(target_width, target_height)
                 @convert_options[:output][:s] = "#{width.to_i/2*2}x#{height.to_i/2*2}"
                 Ffmpeg.log("Convert Options: #{@convert_options[:output][:s]}") if @whiny
               else
@@ -109,8 +109,7 @@ module Paperclip
             elsif @pad_only
               Ffmpeg.log("Pad Only") if @whiny
               # Keep aspect ratio
-              width = target_width.to_i
-              height = (width.to_f / (@meta[:aspect].to_f)).to_i
+              width, height = calculate_output_file_dimensions(target_width, target_height)
               # We should add half the delta as a padding offset Y
               pad_y = (target_height.to_f - height.to_f) / 2
               # There could be options already set
@@ -125,8 +124,7 @@ module Paperclip
             else
               Ffmpeg.log("Resize") if @whiny
               # Keep aspect ratio
-              width = target_width.to_i
-              height = (width.to_f / (@meta[:aspect].to_f)).to_i
+              width, height = calculate_output_file_dimensions(target_width, target_height)
               @convert_options[:output][:s] = "#{width.to_i/2*2}x#{height.to_i/2*2}"
               Ffmpeg.log("Convert Options: #{@convert_options[:output][:s]}") if @whiny
             end
@@ -180,7 +178,15 @@ module Paperclip
 
       dst
     end
-    
+
+    def calculate_output_file_dimensions width, height
+      if @keep_aspect_mode == :save_height
+        [(height.to_f * @meta[:aspect].to_f).to_i, height.to_i]
+      else
+        [width.to_i, (width.to_f / @meta[:aspect].to_f).to_i]
+      end
+    end
+
     def identify
       meta = {}
       av_lib_version = Ffmpeg.detect_ffprobe_or_avprobe
@@ -203,8 +209,8 @@ module Paperclip
         if line =~ /Duration:(\s.?(\d*):(\d*):(\d*\.\d*))/
           meta[:length] = $2.to_s + ":" + $3.to_s + ":" + $4.to_s
         end
-        if line =~ /rotate\s*:\s(\d*)/ 
-          meta[:rotate] = $1.to_i 
+        if line =~ /rotate\s*:\s(\d*)/
+          meta[:rotate] = $1.to_i
         end
       end
       Paperclip.log("[ffmpeg] Command Success") if @whiny
@@ -261,7 +267,7 @@ module Paperclip
       end
     end
   end
-  
+
   class Attachment
     def meta
       instance_read(:meta)
