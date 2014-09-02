@@ -197,7 +197,7 @@ module Paperclip
       if @keep_aspect_mode == :save_height
         [(height.to_f * @meta[:aspect].to_f).to_i, height.to_i]
       else
-        width = target_width.to_i
+        width = width.to_i
         height = if @meta[:rotate].in? [90, 270]
           # target calculations are based on the meta info of
           # the original (un-rotated) image, so we need to
