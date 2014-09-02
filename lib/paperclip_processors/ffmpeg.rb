@@ -1,7 +1,7 @@
 module Paperclip
   class Ffmpeg < Processor
     attr_accessor :geometry, :format, :whiny, :convert_options
-
+    ConvertorNotFoundError = Class.new(StandardError)
     # Creates a Video object set to work on the +file+ given. It
     # will attempt to transcode the video into one defined by +target_geometry+
     # which is a "WxH"-style string. +format+ should be specified.
@@ -21,7 +21,7 @@ module Paperclip
           @convert_options[:output].reverse_merge! options[:convert_options][:output]
         end
       end
-      
+
       @geometry        = options[:geometry]
       @file            = file
       @keep_aspect     = !@geometry.nil? && @geometry[-1,1] != '!'
@@ -47,7 +47,7 @@ module Paperclip
       dst = Tempfile.new([@basename, @format ? ".#{@format}" : ''])
       Ffmpeg.log("Destination File Built") if @whiny
       dst.binmode
-      
+
       parameters = []
 
       Ffmpeg.log("Adding Geometry") if @whiny
@@ -177,7 +177,7 @@ module Paperclip
 
       dst
     end
-    
+
     def identify
       meta = {}
       av_lib_version = Ffmpeg.detect_ffprobe_or_avprobe
@@ -200,8 +200,8 @@ module Paperclip
         if line =~ /Duration:(\s.?(\d*):(\d*):(\d*\.\d*))/
           meta[:length] = $2.to_s + ":" + $3.to_s + ":" + $4.to_s
         end
-        if line =~ /rotate\s*:\s(\d*)/ 
-          meta[:rotate] = $1.to_i 
+        if line =~ /rotate\s*:\s(\d*)/
+          meta[:rotate] = $1.to_i
         end
       end
       Paperclip.log("[ffmpeg] Command Success") if @whiny
@@ -215,31 +215,27 @@ module Paperclip
 
     def self.detect_ffmpeg_or_avconv
       # Check whether ffmpeg or avconv is installed
-      result = Ffmpeg.detect_command("ffmpeg")
-      Ffmpeg.log("Result of command: #{result}") if @whiny
-      if result == true
+      if Ffmpeg.detect_command("ffmpeg")
         Ffmpeg.log("Result of command: #{"ffmpeg"}") if @whiny
           return "ffmpeg"
-      elsif result == false
+      elsif Ffmpeg.detect_command("avconv")
         Ffmpeg.log("Result of command: #{"avconv"}") if @whiny
           return "avconv"
       else
-        return "Error: no video conversion library detected. Please install ffmpeg or avconv."
+        raise ConvertorNotFoundError, "no video conversion library detected. Please install ffmpeg or avconv."
       end
     end
 
     def self.detect_ffprobe_or_avprobe
       # Check whether ffprobe or avprobe is installed
-      result = Ffmpeg.detect_command("ffprobe")
-      Ffmpeg.log("Result of command: #{result}") if @whiny
-      if result == true
+      if Ffmpeg.detect_command("ffprobe")
         Ffmpeg.log("Result of command: #{"ffprobe"}") if @whiny
         return "ffprobe"
-      elsif result == false
+      elsif Ffmpeg.detect_command("avprobe")
         Ffmpeg.log("Result of command: #{"avprobe"}") if @whiny
         return "avprobe"
       else
-        return "Error: no video conversion library detected. Please install ffmpeg or avconv."
+        raise ConvertorNotFoundError, "no video conversion library detected. Please install ffmpeg or avconv."
       end
     end
 
@@ -253,12 +249,10 @@ module Paperclip
           return true
         when /false/
           return false
-        else
-          return nil
       end
     end
   end
-  
+
   class Attachment
     def meta
       instance_read(:meta)
