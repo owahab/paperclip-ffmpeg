@@ -50,6 +50,22 @@ module Paperclip
       
       parameters = []
 
+      # If file has rotation, rotate it back to horizontal
+      if @auto_rotate && !@meta[:rotate].nil?
+        Ffmpeg.log("Adding rotation #{@meta[:rotate]}") if @whiny
+        case @meta[:rotate]
+        when 90
+          @convert_options[:output][:vf] = 'transpose=1'
+        when 180
+          @convert_options[:output][:vf] = "'vflip, hflip'"
+        when 270
+          @convert_options[:output][:vf] = 'transpose=2'
+        end
+        if [90, 100, 270].include? @meta[:rotate]
+          rotated = true
+        end
+      end
+
       Ffmpeg.log("Adding Geometry") if @whiny
       # Add geometry
       if @geometry
@@ -98,12 +114,12 @@ module Paperclip
               # We should add half the delta as a padding offset Y
               pad_y = (target_height.to_f - height.to_f) / 2
               # There could be options already set
-              @convert_options[:output][:vf][/\A/] = ',' if @convert_options[:output][:vf]
+              @convert_options[:output][:vf][/\z/] = ',' if @convert_options[:output][:vf]
               @convert_options[:output][:vf] ||= ''
-              if pad_y > 0
-                @convert_options[:output][:vf][/\A/] = "scale=#{width}:-1,pad=#{width.to_i}:#{target_height.to_i}:0:#{pad_y}:#@pad_color"
+              if pad_y > 0 && rotated.nil?
+                @convert_options[:output][:vf][/\z/] = "scale=#{width}:-1,pad=#{width.to_i}:#{target_height.to_i}:0:#{pad_y}:#@pad_color"
               else
-                @convert_options[:output][:vf][/\A/] = "scale=#{width}:-1,crop=#{width.to_i}:#{height.to_i}"
+                @convert_options[:output][:vf][/\z/] = "scale=#{width}:-1,crop=#{width.to_i}:#{width.to_i}"
               end
               Ffmpeg.log("Convert Options: #{@convert_options[:output][:s]}") if @whiny
             else
@@ -120,19 +136,6 @@ module Paperclip
             @convert_options[:output][:s] = "#{target_width.to_i/2*2}x#{target_height.to_i/2*2}"
             Ffmpeg.log("Convert Options: #{@convert_options[:output][:s]}") if @whiny
           end
-        end
-      end
-
-      # If file has rotation, rotate it back to horizontal
-      if @auto_rotate && !@meta[:rotate].nil?
-        Ffmpeg.log("Adding rotation #{@meta[:rotate]}") if @whiny
-        case @meta[:rotate]
-        when 90
-          @convert_options[:output][:vf] = 'transpose=1'
-        when 180
-          @convert_options[:output][:vf] = 'vflip, hflip'
-        when 270
-          @convert_options[:output][:vf] = 'transpose=2'
         end
       end
 
