@@ -51,23 +51,6 @@ module Paperclip
 
       parameters = []
 
-      # If file has rotation, rotate it back to horizontal
-      if @auto_rotate && !@meta[:rotate].nil?
-        Ffmpeg.log("Adding rotation #{@meta[:rotate]}") if @whiny
-        case @meta[:rotate]
-        when 90
-          @convert_options[:output][:vf] = 'transpose=1'
-        when 180
-          @convert_options[:output][:vf] = "'vflip, hflip'"
-        when 270
-          @convert_options[:output][:vf] = 'transpose=2'
-        end
-        if [90, 100, 270].include? @meta[:rotate]
-          rotated = true
-        end
-      end
-
-      Ffmpeg.log("Adding Geometry") if @whiny
 
       # If file has rotation, rotate it back to horizontal
       if @auto_rotate && !@meta[:rotate].nil?
@@ -76,13 +59,15 @@ module Paperclip
         when 90
           @convert_options[:output][:vf] = 'transpose=1'
         when 180
-          @convert_options[:output][:vf] = 'vflip,hflip'
+          @convert_options[:output][:vf] = '"vflip,hflip"'
         when 270
           @convert_options[:output][:vf] = 'transpose=2'
         end
       end
 
       # Add geometry
+      Ffmpeg.log("Adding Geometry") if @whiny
+
       if @geometry
         Ffmpeg.log("Extracting Target Dimensions") if @whiny
         # Extract target dimensions
@@ -90,6 +75,7 @@ module Paperclip
           target_width = $1
           target_height = $2
         end
+	puts @geometry,"lalaal"
         # Only calculate target dimensions if we have current dimensions
         unless @meta[:size].nil?
           Ffmpeg.log("Target Size is Available") if @whiny
