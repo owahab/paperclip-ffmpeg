@@ -1,3 +1,5 @@
+This project is being deprecated in favor of [https://github.com/ruby-av/paperclip-av-transcoder](https://github.com/ruby-av/paperclip-av-transcoder)
+
 Paperclip FFMPEG
 ================
 [![Build Status](https://travis-ci.org/owahab/paperclip-ffmpeg.png?branch=master)](https://travis-ci.org/owahab/paperclip-ffmpeg)
