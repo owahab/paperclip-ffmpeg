@@ -35,8 +35,9 @@ module Paperclip
       @current_format   = File.extname(@file.path)
       @basename         = File.basename(@file.path, @current_format)
       @meta             = identify
+      @exiftool         = options[:use_exiftool].nil? false : options[:use_exiftool]
       @pad_color        = options[:pad_color].nil? ? "black" : options[:pad_color]
-      @auto_rotate      = options[:auto_rotate].nil? ? false : options[:auto_rotate]
+      @auto_rotate      = options[:auto_rotate]
       attachment.instance_write(:meta, @meta)
     end
     # Performs the transcoding of the +file+ into a thumbnail/video. Returns the Tempfile
@@ -51,8 +52,8 @@ module Paperclip
 
       parameters = []
 
-      # If file has rotation, rotate it back to horizontal
-      if @auto_rotate && !@meta[:rotate].nil?
+      # If file has rotation, rotate it to horizontal.
+      if @auto_rotate == "landscape" && !@meta[:rotate].nil?
         Ffmpeg.log("Adding rotation #{@meta[:rotate]}") if @whiny
         case @meta[:rotate]
         when 90
@@ -62,26 +63,28 @@ module Paperclip
         when 270
           @convert_options[:output][:vf] = 'transpose=2'
         end
-        if [90, 100, 270].include? @meta[:rotate]
+        if [90, 180, 270].include? @meta[:rotate]
+          rotated = true
+        end
+      end
+
+      # If file has rotation, rotate it to portrait.
+      if @auto_rotate == "portrait" && !@meta[:rotate].nil?
+        Ffmpeg.log("Adding rotation #{@meta[:rotate]}") if @whiny
+        case @meta[:rotate]
+        when 0
+          @convert_options[:output][:vf] = 'transpose=1'
+        when 90
+          @convert_options[:output][:vf] = "'vflip, hflip'"
+        when 180
+          @convert_options[:output][:vf] = 'transpose=2'
+        end
+        if [0, 90, 180].include? @meta[:rotate]
           rotated = true
         end
       end
 
       Ffmpeg.log("Adding Geometry") if @whiny
-
-      # If file has rotation, rotate it back to horizontal
-      if @auto_rotate && !@meta[:rotate].nil?
-        Ffmpeg.log("Adding rotation #{@meta[:rotate]}") if @whiny
-        case @meta[:rotate]
-        when 90
-          @convert_options[:output][:vf] = 'transpose=1'
-        when 180
-          @convert_options[:output][:vf] = 'vflip,hflip'
-        when 270
-          @convert_options[:output][:vf] = 'transpose=2'
-        end
-      end
-
       # Add geometry
       if @geometry
         Ffmpeg.log("Extracting Target Dimensions") if @whiny
@@ -211,28 +214,38 @@ module Paperclip
 
     def identify
       meta = {}
-      av_lib_version = Ffmpeg.detect_ffprobe_or_avprobe
-      command = "#{av_lib_version} \"#{File.expand_path(@file.path)}\" 2>&1"
-      Paperclip.log("[ffmpeg] #{command}")
-      ffmpeg = Cocaine::CommandLine.new(command).run
-      ffmpeg.split("\n").each do |line|
-        if line =~ /(([\d\.]*)\s.?)fps,/
-          meta[:fps] = $1.to_i
-        end
-        # Matching lines like:
-        # Video: h264, yuvj420p, 640x480 [PAR 72:72 DAR 4:3], 10301 kb/s, 30 fps, 30 tbr, 600 tbn, 600 tbc
-        if line =~ /Video:(.*)/
-           v = $1.to_s
-           size = v.match(/\d{3,5}x\d{3,5}/).to_s
-           meta[:size] = size
-           meta[:aspect] = size.split('x').first.to_f / size.split('x').last.to_f
-         end
-        # Matching Duration: 00:01:31.66, start: 0.000000, bitrate: 10404 kb/s
-        if line =~ /Duration:(\s.?(\d*):(\d*):(\d*\.\d*))/
-          meta[:length] = $2.to_s + ":" + $3.to_s + ":" + $4.to_s
-        end
-        if line =~ /rotate\s*:\s(\d*)/
-          meta[:rotate] = $1.to_i
+      if @exiftool
+        video = MiniExiftool.new(File.expand_path(@file.path))
+        meta[:fps] = video['VideoFrameRate']
+        meta[:size] = video['ImageSize']
+        meta[:aspect] = video['ImageSize'].split('x').first.to_f / video['ImageSize'].split('x').last.to_f
+        # to produce a string same as ffprobe or avprobe in format "0:00:10:020"
+        meta[:length] = DateTime.parse(video['MediaDuration'].split(' ').first).strftime("%k:%M:%S:%L").split(' ').first
+        meta[:rotate] = video['Rotation']
+      else
+        av_lib_version = Ffmpeg.detect_ffprobe_or_avprobe
+        command = "#{av_lib_version} \"#{File.expand_path(@file.path)}\" 2>&1"
+        Paperclip.log("[ffmpeg] #{command}")
+        ffmpeg = Cocaine::CommandLine.new(command).run
+        ffmpeg.split("\n").each do |line|
+          if line =~ /(([\d\.]*)\s.?)fps,/
+            meta[:fps] = $1.to_i
+          end
+          # Matching lines like:
+          # Video: h264, yuvj420p, 640x480 [PAR 72:72 DAR 4:3], 10301 kb/s, 30 fps, 30 tbr, 600 tbn, 600 tbc
+          if line =~ /Video:(.*)/
+             v = $1.to_s
+             size = v.match(/\d{3,5}x\d{3,5}/).to_s
+             meta[:size] = size
+             meta[:aspect] = size.split('x').first.to_f / size.split('x').last.to_f
+           end
+          # Matching Duration: 00:01:31.66, start: 0.000000, bitrate: 10404 kb/s
+          if line =~ /Duration:(\s.?(\d*):(\d*):(\d*\.\d*))/
+            meta[:length] = $2.to_s + ":" + $3.to_s + ":" + $4.to_s
+          end
+          if line =~ /rotate\s*:\s(\d*)/
+            meta[:rotate] = $1.to_i
+          end
         end
       end
       Paperclip.log("[ffmpeg] Command Success") if @whiny
