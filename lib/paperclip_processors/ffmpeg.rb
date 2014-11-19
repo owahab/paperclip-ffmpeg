@@ -35,7 +35,7 @@ module Paperclip
       @current_format   = File.extname(@file.path)
       @basename         = File.basename(@file.path, @current_format)
       @meta             = identify
-      @exiftool         = options[:use_exiftool].nil? false : options[:use_exiftool]
+      @exiftool         = options[:use_exiftool].nil? ? false : options[:use_exiftool]
       @pad_color        = options[:pad_color].nil? ? "black" : options[:pad_color]
       @auto_rotate      = options[:auto_rotate]
       attachment.instance_write(:meta, @meta)
