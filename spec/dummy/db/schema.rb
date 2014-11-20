@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20141119191342) do
+ActiveRecord::Schema.define(version: 20141120004147) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -547,6 +547,16 @@ ActiveRecord::Schema.define(version: 20141119191342) do
     t.datetime "landscapeClip_updated_at"
     t.hstore   "portraitClip_meta"
     t.hstore   "landscapeClip_meta"
+    t.string   "exiftoolClip_file_name"
+    t.string   "exiftoolClip_content_type"
+    t.integer  "exiftoolClip_file_size"
+    t.datetime "exiftoolClip_updated_at"
+    t.string   "exiftoolClipRotate_file_name"
+    t.string   "exiftoolClipRotate_content_type"
+    t.integer  "exiftoolClipRotate_file_size"
+    t.datetime "exiftoolClipRotate_updated_at"
+    t.hstore   "exiftoolClip_meta"
+    t.hstore   "exiftoolClipRotate_meta"
   end
 
   create_table "vines", force: true do |t|

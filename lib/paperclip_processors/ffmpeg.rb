@@ -34,8 +34,8 @@ module Paperclip
       @time             = options[:time].nil? ? 3 : options[:time]
       @current_format   = File.extname(@file.path)
       @basename         = File.basename(@file.path, @current_format)
-      @meta             = identify
       @exiftool         = options[:use_exiftool].nil? ? false : options[:use_exiftool]
+      @meta             = identify
       @pad_color        = options[:pad_color].nil? ? "black" : options[:pad_color]
       @auto_rotate      = options[:auto_rotate]
       attachment.instance_write(:meta, @meta)
@@ -232,8 +232,9 @@ module Paperclip
         meta[:size] = video['ImageSize']
         meta[:aspect] = video['ImageSize'].split('x').first.to_f / video['ImageSize'].split('x').last.to_f
         # to produce a string same as ffprobe or avprobe in format "0:00:10:020"
-        meta[:length] = DateTime.parse(video['MediaDuration'].split(' ').first).strftime("%k:%M:%S:%L").split(' ').first
+        meta[:length] = video['Duration']
         meta[:rotate] = video['Rotation']
+        meta = meta.merge(video.to_hash.symbolize_keys!)
       else
         av_lib_version = Ffmpeg.detect_ffprobe_or_avprobe
         command = "#{av_lib_version} \"#{File.expand_path(@file.path)}\" 2>&1"

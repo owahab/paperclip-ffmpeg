@@ -6,7 +6,7 @@ Gem::Specification.new do |s|
   s.version     = '1.3.2'
   s.platform    = Gem::Platform::RUBY
   s.licenses    = 'MIT'
-  s.authors     = ["Omar Abdel-Wahab"]
+  s.authors     = ["Omar Abdel-Wahab", "Daniel Archer"]
   s.email       = ["owahab@gmail.com"]
   s.homepage    = "http://github.com/owahab/paperclip-ffmpeg"
   s.summary     = %q{Process your attachments with FFMPEG}
