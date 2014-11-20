@@ -230,7 +230,7 @@ module Paperclip
         # to produce a string same as ffprobe or avprobe in format "0:00:10:020"
         meta[:length] = video['Duration']
         meta[:rotate] = video['Rotation']
-        meta = meta.merge(video.to_hash.symbolize_keys!)
+        meta = meta.merge(video.to_hash.delete_if{|k,v| k == "GoogleSourceData" || k == "GooglePingURL" || k == "GooglePingMessage" || k == "GoogleHostHeader"}.symbolize_keys!)
       else
         av_lib_version = Ffmpeg.detect_ffprobe_or_avprobe
         command = "#{av_lib_version} \"#{File.expand_path(@file.path)}\" 2>&1"

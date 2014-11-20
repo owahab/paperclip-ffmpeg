@@ -50,7 +50,7 @@ describe 'Video' do
 
 	context 'Exiftool is specified for metadata' do
 		it 'uses Exiftool' do
-			@video = Video.create!(exiftoolClip: File.new(Dir.pwd + '/spec/support/2.mp4'))
+			@video = Video.new(exiftoolClip: File.new(Dir.pwd + '/spec/support/2.mp4'))
 			expect(@video.exiftoolClip_meta['AudioFormat']).to_not be_nil
 		end
 
@@ -58,6 +58,13 @@ describe 'Video' do
 			@video = Video.create!(exiftoolClipRotate: File.new(Dir.pwd + '/spec/support/2.mp4'))
 			expect(@video.exiftoolClipRotate_meta['rotate']).to eq("0")
 		end
+
+		# Google/YouTube clips have extraneous data in the exifdata, that causes pg:Unexpected end of string when saving metadata
+		it 'uses Exiftool and has long Google exifdata' do
+			@video = Video.new(exiftoolClip: File.new(Dir.pwd + '/spec/support/4.mp4'))
+			expect(@video.exiftoolClip_meta['AudioFormat']).to_not be_nil
+		end
+
 	end
 end
 
