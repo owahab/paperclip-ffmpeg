@@ -52,38 +52,6 @@ module Paperclip
 
       parameters = []
 
-      # If file has rotation, rotate it to horizontal.
-      if @auto_rotate == "landscape" && !@meta[:rotate].nil?
-        Ffmpeg.log("Adding rotation #{@meta[:rotate]}") if @whiny
-        case @meta[:rotate]
-        when 90
-          @convert_options[:output][:vf] = 'transpose=1'
-        when 180
-          @convert_options[:output][:vf] = "'vflip, hflip'"
-        when 270
-          @convert_options[:output][:vf] = 'transpose=2'
-        end
-        if [90, 180, 270].include? @meta[:rotate]
-          rotated = true
-        end
-      end
-
-      # If file has rotation, rotate it to portrait.
-      if @auto_rotate == "portrait" && !@meta[:rotate].nil?
-        Ffmpeg.log("Adding rotation #{@meta[:rotate]}") if @whiny
-        case @meta[:rotate]
-        when 0
-          @convert_options[:output][:vf] = 'transpose=1'
-        when 90
-          @convert_options[:output][:vf] = "'vflip, hflip'"
-        when 180
-          @convert_options[:output][:vf] = 'transpose=2'
-        end
-        if [0, 90, 180].include? @meta[:rotate]
-          rotated = true
-        end
-      end
-
       Ffmpeg.log("Adding Geometry") if @whiny
       # Add geometry
       if @geometry
@@ -154,6 +122,39 @@ module Paperclip
         end
       end
 
+      if @auto_rotate
+        Ffmpeg.log("Adding rotation #{@meta[:rotate]}") if @whiny
+        # If file has rotation, rotate it to horizontal.
+        if @auto_rotate == "landscape"
+          case @meta[:rotate]
+          when 90
+            @convert_options[:output][:vf] = 'transpose=1'
+          # when 180
+          #   @convert_options[:output][:vf] = "'vflip, hflip'"
+          when 270
+            @convert_options[:output][:vf] = 'transpose=2'
+          end
+          if [90, 180, 270].include? @meta[:rotate]
+            rotated = true
+          end
+        end
+
+        # If file has rotation, rotate it to portrait.
+        if @auto_rotate == "portrait"
+          case @meta[:rotate]
+          when 0
+            @convert_options[:output][:vf] = 'transpose=1'
+          # when 90
+          #   @convert_options[:output][:vf] = "'vflip, hflip'"
+          when 180
+            @convert_options[:output][:vf] = 'transpose=2'
+          end
+          if [0, 180].include? @meta[:rotate]
+            rotated = true
+          end
+        end
+      end
+
       Ffmpeg.log("Adding Format") if @whiny
       # Add format
       case @format
@@ -201,14 +202,25 @@ module Paperclip
         [(height.to_f * @meta[:aspect].to_f).to_i, height.to_i]
       else
         width = width.to_i
-        height = if @meta[:rotate].in? [90, 270]
+        if @auto_rotate == 'portrait'
           # target calculations are based on the meta info of
           # the original (un-rotated) image, so we need to
           # invert the aspect ratio when we're transposing the image
-          width * @meta[:aspect]
+          height = if @meta[:rotate].in? [0, 180]
+            width * @meta[:aspect]
+          else
+            (width.to_f / (@meta[:aspect].to_f)).to_i
+          end
+        elsif @auto_rotate == 'landscape'
+          height = if @meta[:rotate].in? [90, 270]
+            width * @meta[:aspect]
+          else
+            (width.to_f / (@meta[:aspect].to_f)).to_i
+          end
         else
           (width.to_f / (@meta[:aspect].to_f)).to_i
         end
+        [width, height]
       end
     end
 
@@ -245,6 +257,14 @@ module Paperclip
           end
           if line =~ /rotate\s*:\s(\d*)/
             meta[:rotate] = $1.to_i
+          end
+        end
+        if meta[:rotate].nil?
+          current_width, current_height = meta[:size].split('x')
+          if current_width == current_height || current_width > current_height
+            meta[:rotate] = 0
+          elsif current_width < current_height
+            meta[:rotate] = 90
           end
         end
       end

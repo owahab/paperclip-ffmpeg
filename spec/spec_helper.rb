@@ -12,7 +12,7 @@ require 'image_size'
 Dir[Rails.root.join("spec/support/**/*.rb")].each { |f| require f }
 RSpec.configure do |config|
 	config.use_transactional_fixtures = false
-
+	
   config.after(:each) do
     DatabaseCleaner.clean
   end
