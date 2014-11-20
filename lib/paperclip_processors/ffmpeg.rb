@@ -222,47 +222,41 @@ module Paperclip
 
     def identify
       meta = {}
+      av_lib_version = Ffmpeg.detect_ffprobe_or_avprobe
+      command = "#{av_lib_version} \"#{File.expand_path(@file.path)}\" 2>&1"
+      Paperclip.log("[ffmpeg] #{command}")
+      ffmpeg = Cocaine::CommandLine.new(command).run
+      ffmpeg.split("\n").each do |line|
+        if line =~ /(([\d\.]*)\s.?)fps,/
+          meta[:fps] = $1.to_i
+        end
+        # Matching lines like:
+        # Video: h264, yuvj420p, 640x480 [PAR 72:72 DAR 4:3], 10301 kb/s, 30 fps, 30 tbr, 600 tbn, 600 tbc
+        if line =~ /Video:(.*)/
+           v = $1.to_s
+           size = v.match(/\d{3,5}x\d{3,5}/).to_s
+           meta[:size] = size
+           meta[:aspect] = size.split('x').first.to_f / size.split('x').last.to_f
+         end
+        # Matching Duration: 00:01:31.66, start: 0.000000, bitrate: 10404 kb/s
+        if line =~ /Duration:(\s.?(\d*):(\d*):(\d*\.\d*))/
+          meta[:length] = $2.to_s + ":" + $3.to_s + ":" + $4.to_s
+        end
+        if line =~ /rotate\s*:\s(\d*)/
+          meta[:rotate] = $1.to_i
+        end
+      end
       if @exiftool
         video = MiniExiftool.new(File.expand_path(@file.path))
-        meta[:fps] = video['VideoFrameRate']
-        meta[:size] = video['ImageSize']
-        meta[:aspect] = video['ImageSize'].split('x').first.to_f / video['ImageSize'].split('x').last.to_f
-        # to produce a string same as ffprobe or avprobe in format "0:00:10:020"
-        meta[:length] = video['Duration']
-        meta[:rotate] = video['Rotation']
+        meta[:rotate] ||= video['Rotation']
         meta = meta.merge(video.to_hash.delete_if{|k,v| k == "GoogleSourceData" || k == "GooglePingURL" || k == "GooglePingMessage" || k == "GoogleHostHeader"}.symbolize_keys!)
-      else
-        av_lib_version = Ffmpeg.detect_ffprobe_or_avprobe
-        command = "#{av_lib_version} \"#{File.expand_path(@file.path)}\" 2>&1"
-        Paperclip.log("[ffmpeg] #{command}")
-        ffmpeg = Cocaine::CommandLine.new(command).run
-        ffmpeg.split("\n").each do |line|
-          if line =~ /(([\d\.]*)\s.?)fps,/
-            meta[:fps] = $1.to_i
-          end
-          # Matching lines like:
-          # Video: h264, yuvj420p, 640x480 [PAR 72:72 DAR 4:3], 10301 kb/s, 30 fps, 30 tbr, 600 tbn, 600 tbc
-          if line =~ /Video:(.*)/
-             v = $1.to_s
-             size = v.match(/\d{3,5}x\d{3,5}/).to_s
-             meta[:size] = size
-             meta[:aspect] = size.split('x').first.to_f / size.split('x').last.to_f
-           end
-          # Matching Duration: 00:01:31.66, start: 0.000000, bitrate: 10404 kb/s
-          if line =~ /Duration:(\s.?(\d*):(\d*):(\d*\.\d*))/
-            meta[:length] = $2.to_s + ":" + $3.to_s + ":" + $4.to_s
-          end
-          if line =~ /rotate\s*:\s(\d*)/
-            meta[:rotate] = $1.to_i
-          end
-        end
-        if meta[:rotate].nil?
-          current_width, current_height = meta[:size].split('x')
-          if current_width == current_height || current_width > current_height
-            meta[:rotate] = 0
-          elsif current_width < current_height
-            meta[:rotate] = 90
-          end
+      end
+      if meta[:rotate].nil?
+        current_width, current_height = meta[:size].split('x')
+        if current_width == current_height || current_width > current_height
+          meta[:rotate] = 0
+        elsif current_width < current_height
+          meta[:rotate] = 90
         end
       end
       Paperclip.log("[ffmpeg] Command Success") if @whiny
