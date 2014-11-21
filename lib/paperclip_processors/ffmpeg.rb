@@ -34,9 +34,10 @@ module Paperclip
       @time             = options[:time].nil? ? 3 : options[:time]
       @current_format   = File.extname(@file.path)
       @basename         = File.basename(@file.path, @current_format)
+      @exiftool         = options[:use_exiftool].nil? ? false : options[:use_exiftool]
       @meta             = identify
       @pad_color        = options[:pad_color].nil? ? "black" : options[:pad_color]
-      @auto_rotate      = options[:auto_rotate].nil? ? false : options[:auto_rotate]
+      @auto_rotate      = options[:auto_rotate]
       attachment.instance_write(:meta, @meta)
     end
     # Performs the transcoding of the +file+ into a thumbnail/video. Returns the Tempfile
@@ -51,37 +52,36 @@ module Paperclip
 
       parameters = []
 
-      # If file has rotation, rotate it back to horizontal
-      if @auto_rotate && !@meta[:rotate].nil?
+      if @auto_rotate
         Ffmpeg.log("Adding rotation #{@meta[:rotate]}") if @whiny
-        case @meta[:rotate]
-        when 90
-          @convert_options[:output][:vf] = 'transpose=1'
-        when 180
-          @convert_options[:output][:vf] = "'vflip, hflip'"
-        when 270
-          @convert_options[:output][:vf] = 'transpose=2'
+        # If file has rotation, rotate it to horizontal.
+        if @auto_rotate == "landscape"
+          case @meta[:rotate]
+          when 90
+            @convert_options[:output][:vf] = 'transpose=1'
+          when 270
+            @convert_options[:output][:vf] = 'transpose=2'
+          end
+          if [90, 270].include? @meta[:rotate]
+            rotated = true
+          end
         end
-        if [90, 100, 270].include? @meta[:rotate]
-          rotated = true
+
+        # If file has rotation, rotate it to portrait.
+        if @auto_rotate == "portrait"
+          case @meta[:rotate]
+          when 0
+            @convert_options[:output][:vf] = 'transpose=1'
+          when 180
+            @convert_options[:output][:vf] = 'transpose=2'
+          end
+          if [0, 180].include? @meta[:rotate]
+            rotated = true
+          end
         end
       end
 
       Ffmpeg.log("Adding Geometry") if @whiny
-
-      # If file has rotation, rotate it back to horizontal
-      if @auto_rotate && !@meta[:rotate].nil?
-        Ffmpeg.log("Adding rotation #{@meta[:rotate]}") if @whiny
-        case @meta[:rotate]
-        when 90
-          @convert_options[:output][:vf] = 'transpose=1'
-        when 180
-          @convert_options[:output][:vf] = 'vflip,hflip'
-        when 270
-          @convert_options[:output][:vf] = 'transpose=2'
-        end
-      end
-
       # Add geometry
       if @geometry
         Ffmpeg.log("Extracting Target Dimensions") if @whiny
@@ -190,7 +190,7 @@ module Paperclip
         raise Paperclip::Error, "error while processing video for #{@basename}: #{e}" if @whiny
       end
 
-      dst
+      dst # Return tempfile
     end
 
     def calculate_output_file_dimensions width, height
@@ -198,14 +198,25 @@ module Paperclip
         [(height.to_f * @meta[:aspect].to_f).to_i, height.to_i]
       else
         width = width.to_i
-        height = if @meta[:rotate].in? [90, 270]
+        if @auto_rotate == 'portrait'
           # target calculations are based on the meta info of
           # the original (un-rotated) image, so we need to
           # invert the aspect ratio when we're transposing the image
-          width * @meta[:aspect]
+          height = if @meta[:rotate].in? [0, 180]
+            width * @meta[:aspect]
+          else
+            (width.to_f / (@meta[:aspect].to_f)).to_i
+          end
+        elsif @auto_rotate == 'landscape'
+          height = if @meta[:rotate].in? [90, 270]
+            width * @meta[:aspect]
+          else
+            (width.to_f / (@meta[:aspect].to_f)).to_i
+          end
         else
-          (width.to_f / (@meta[:aspect].to_f)).to_i
+          height = (width.to_f / (@meta[:aspect].to_f)).to_i
         end
+        [width, height]
       end
     end
 
@@ -233,6 +244,19 @@ module Paperclip
         end
         if line =~ /rotate\s*:\s(\d*)/
           meta[:rotate] = $1.to_i
+        end
+      end
+      if @exiftool
+        video = MiniExiftool.new(File.expand_path(@file.path))
+        meta[:rotate] ||= video['Rotation']
+        meta = meta.merge(video.to_hash.delete_if{|k,v| k == "GoogleSourceData" || k == "GooglePingURL" || k == "GooglePingMessage" || k == "GoogleHostHeader"}.symbolize_keys!)
+      end
+      if meta[:rotate].nil?
+        current_width, current_height = meta[:size].split('x')
+        if current_width == current_height || current_width > current_height
+          meta[:rotate] = 0
+        elsif current_width < current_height
+          meta[:rotate] = 90
         end
       end
       Paperclip.log("[ffmpeg] Command Success") if @whiny

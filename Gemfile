@@ -4,7 +4,9 @@ source "http://rubygems.org"
 gemspec
 
 group :test do
+  gem 'pg'
   gem 'rake'
   gem 'bundler'
   gem 'rspec', '~> 2.14'
+  gem 'pry'
 end
