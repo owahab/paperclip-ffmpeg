@@ -52,9 +52,9 @@ This will produce:
 1. A transcoded `:medium` FLV file with the requested dimensions if they will match the aspect ratio of the original file, otherwise, width will be maintained and height will be recalculated to keep the original aspect ration.
 2. A screenshot `:thumb` with the requested dimensions regardless of the aspect ratio.
 
-You may optionally add `<attachment>_meta` to your model and paperclip-ffmpeg will add information about the processed video.
+You may optionally add `<attachment>_meta` to your model and paperclip-ffmpeg will add information about the processed video.  You may optionally add `use_exiftool: true` to extract all of the metadata from the videos and store it in the meta hash. If using PostgreSQL, enable hstore in one migration, then add an hstore column for this data.
 
-You may optionally add `auto_rotate: true` to automatically straighten videos recoreded in a non-landscape mode.
+You may optionally add `auto_rotate: 'portrait'` or `auto_rotate: 'landscape'` to automatically rotate videos to result in portrait or landscape.
 
 Streaming Video
 -------------------
