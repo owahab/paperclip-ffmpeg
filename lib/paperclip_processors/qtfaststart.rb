@@ -35,7 +35,7 @@ module Paperclip
 
       Paperclip.log("[qtfaststart] #{parameters}")
       begin
-        success = Paperclip.run("qt-faststart", parameters, :source => "#{File.expand_path(src.path)}", :dest => File.expand_path(dst.path))
+        success = Paperclip.run("qtfaststart", parameters, :source => "#{File.expand_path(src.path)}", :dest => File.expand_path(dst.path))
       rescue Cocaine::ExitStatusError => e
         raise PaperclipError, "error while processing video for #{@basename}: #{e}" if @whiny
       end
