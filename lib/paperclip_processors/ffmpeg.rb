@@ -36,6 +36,7 @@ module Paperclip
       @meta            = identify
       @pad_color       = options[:pad_color].nil? ? "black" : options[:pad_color]
       @auto_rotate     = options[:auto_rotate].nil? ? false : options[:auto_rotate]
+      @auto_flip       = options[:auto_flip].nil? ? false : options[:auto_flip]
       attachment.instance_write(:meta, @meta)
     end
     # Performs the transcoding of the +file+ into a thumbnail/video. Returns the Tempfile
@@ -129,6 +130,19 @@ module Paperclip
         case @meta[:rotate]
         when 90
           @convert_options[:output][:vf] = 'transpose=1'
+        when 180
+          @convert_options[:output][:vf] = 'vflip,hflip'
+        when 270
+          @convert_options[:output][:vf] = 'transpose=2'
+        end
+      end
+
+      # Created auto_flip based on auto_rotate and removed when 90 as we don't
+      # want to convert everything into landscape but only capture when a user
+      # has taken a video upside down
+      if @auto_flip && !@meta[:rotate].nil?
+        Ffmpeg.log("Adding vflip, hflip #{@meta[:rotate]}") if @whiny
+        case @meta[:rotate]
         when 180
           @convert_options[:output][:vf] = 'vflip,hflip'
         when 270
