@@ -1,9 +1,0 @@
-*.gem
-.bundle
-Gemfile.lock
-pkg/*
-spec/dummy/public/system/videos/*
-spec/dummy/db/development.sqlite3
-spec/dummy/log/*
-spec/dummy/db/test.sqlite3
-
